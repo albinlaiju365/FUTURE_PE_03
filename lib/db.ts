@@ -2,7 +2,13 @@ import Database from 'better-sqlite3';
 import path from 'path';
 
 // Initialize the database
-const dbPath = path.join(process.cwd(), 'nexis.db');
+// Initialize the database
+// Vercel Serverless Hack: Use /tmp for write access in production
+// Note: This data is ephemeral and will be wiped on cold starts.
+const dbPath = process.env.NODE_ENV === 'production'
+    ? '/tmp/nexis.db'
+    : path.join(process.cwd(), 'nexis.db');
+
 const db = new Database(dbPath);
 
 // Create the users table if it doesn't exist
