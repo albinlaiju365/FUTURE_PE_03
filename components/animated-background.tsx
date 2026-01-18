@@ -10,7 +10,7 @@ interface AnimatedBackgroundProps {
 }
 
 export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
-    const { theme } = useTheme()
+    const { resolvedTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
 
     useEffect(() => {
@@ -19,11 +19,11 @@ export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
 
     if (!mounted) return null
 
-    const isDark = theme === "dark" || theme === "system"
+    const isDark = resolvedTheme === "dark"
 
     const colors = isDark
         ? ["#00f2ea", "#ff0055", "#7000ff", "#0055ff"]
-        : ["#00d2da", "#df0045", "#6000df", "#0045df"]
+        : ["#00f2ea", "#ff0055", "#7000ff", "#0055ff"] // User requested same RGB colors
 
     return (
         <div className={cn("fixed inset-0 -z-50 overflow-hidden bg-background", className)}>
@@ -32,7 +32,10 @@ export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
             {colors.map((color, i) => (
                 <motion.div
                     key={i}
-                    className="absolute rounded-full mix-blend-screen opacity-80 blur-[80px]"
+                    className={cn(
+                        "absolute rounded-full opacity-80 blur-[80px]",
+                        isDark ? "mix-blend-screen" : "mix-blend-multiply"
+                    )}
                     style={{
                         backgroundColor: color,
                         width: "45vw",
