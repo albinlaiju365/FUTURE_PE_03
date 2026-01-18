@@ -41,6 +41,18 @@ export default function Page() {
     checkAuth()
     // Listen for storage changes (for across tabs updates still useful)
     window.addEventListener('storage', checkAuth)
+
+    // Legacy Data Purge (One-time cleanup)
+    if (localStorage.getItem("registeredUsers")) {
+      console.log("System Reset: Purging legacy data protocols...")
+      localStorage.removeItem("registeredUsers") // Old mock DB
+      localStorage.removeItem("isLoggedIn")      // Old session flag
+      localStorage.removeItem("userName")
+      localStorage.removeItem("userEmail")
+      // localStorage.removeItem("nexis_chat_history") // Uncomment if we want to wipe chats too. Currently keeping history as user might value it.
+      // If user wants full nuke, they can clear browser data.
+    }
+
     return () => window.removeEventListener('storage', checkAuth)
   }, [])
 

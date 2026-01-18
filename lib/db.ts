@@ -6,7 +6,7 @@ const dbPath = path.join(process.cwd(), 'nexis.db');
 const db = new Database(dbPath);
 
 // Create the users table if it doesn't exist
-const createTableQuery = `
+const createUsersTable = `
     CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
@@ -16,6 +16,23 @@ const createTableQuery = `
     )
 `;
 
-db.exec(createTableQuery);
+// Create the v2 memories table (Lifecycle-based)
+const createMemoriesTable = `
+    CREATE TABLE IF NOT EXISTS memories_v2 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        content TEXT NOT NULL,
+        type TEXT NOT NULL, -- identity, project, behavioral, ephemeral
+        confidence REAL DEFAULT 1.0,
+        importance TEXT DEFAULT 'medium', -- high, medium, low
+        last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP,
+        decay_rate TEXT DEFAULT 'slow', -- slow, fast, none
+        metadata TEXT, -- JSON string for tags, provenance
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+`;
+
+db.exec(createUsersTable);
+db.exec(createMemoriesTable);
 
 export default db;
