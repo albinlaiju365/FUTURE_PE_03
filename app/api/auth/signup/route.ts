@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { sql } from "@/lib/db";
+import { sql, createUsersTableParams, createMemoriesTableParams } from "@/lib/db";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -12,6 +12,11 @@ const signupSchema = z.object({
 
 export async function POST(req: Request) {
     try {
+        // Auto-Setup: Ensure tables exist (Self-Healing Architecture)
+        // In a high-traffic app, this would be a separate migration script.
+        await sql.query(createUsersTableParams);
+        await sql.query(createMemoriesTableParams);
+
         const body = await req.json();
         const { name, email, password } = signupSchema.parse(body);
 
