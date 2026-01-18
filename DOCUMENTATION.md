@@ -8,7 +8,7 @@
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS 4, Framer Motion (Animations)
 - **AI Provider**: Vercel AI SDK (`ai`), Groq (`@ai-sdk/groq`), Google Gemini (`@google/generative-ai`)
-- **Database**: SQLite (`better-sqlite3`)
+- **Database**: PostgreSQL (Vercel Postgres - Serverless)
 - **Authentication**: Custom Auth (Bcrypt + JWT + Cookies)
 - **State Management**: React Hooks + LocalStorage (for History/Settings)
 - **UI Components**: Radix UI, Lucide React, Custom "Data Plates"
