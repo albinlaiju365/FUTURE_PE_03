@@ -33,7 +33,6 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
-import { HackerText } from "@/components/hacker-text"
 
 import { ProfileMenu } from "@/components/profile-menu"
 
@@ -499,73 +498,36 @@ function ChatContent() {
                                     </div>
                                 ) : (
                                     <div className="max-w-4xl mx-auto space-y-12 pb-4">
-                                        {messages.map((m: any, index: number) => {
-                                            const isLastMessage = index === messages.length - 1
-                                            const isAi = m.role !== "user"
-
-                                            return (
-                                                <div key={m.id} className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                                    {/* Data Plate Container */}
+                                        {messages.map((m: any) => (
+                                            <div key={m.id} className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                                <div className="flex items-start gap-6">
                                                     <div className={cn(
-                                                        "relative overflow-hidden p-6 rounded-lg transition-all duration-500",
-                                                        "border border-white/5",
-                                                        isAi ? "bg-[#0a0a0a]/80" : "bg-accent/5",
-                                                        isAi && isLastMessage && isLoading ? "shadow-[0_0_30px_-5px_var(--color-accent)]/20 border-accent/30" : "hover:border-white/10"
+                                                        "w-8 h-8 flex-shrink-0 flex items-center justify-center border",
+                                                        m.role === "user" ? "border-muted-foreground/30 bg-muted/5" : "border-accent/40 bg-accent/5 text-accent"
                                                     )}>
-                                                        {/* Scanline / Grid effect overlay */}
-                                                        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,18,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 opacity-20 pointer-events-none bg-[length:100%_4px,3px_100%]" />
-
-                                                        {/* Decorative corner markers */}
-                                                        {isAi && (
-                                                            <>
-                                                                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-accent/50" />
-                                                                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-accent/50" />
-                                                                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-accent/50" />
-                                                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-accent/50" />
-                                                            </>
-                                                        )}
-
-                                                        <div className="relative z-10 flex items-start gap-6">
-                                                            <div className={cn(
-                                                                "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-sm border",
-                                                                m.role === "user" ? "border-muted-foreground/30 bg-muted/5" : "border-accent/40 bg-accent/5 text-accent shadow-[0_0_10px_-2px_var(--color-accent)]/30"
+                                                        {m.role === "user" ? <Command className="w-4 h-4" /> : <Cpu className="w-4 h-4" />}
+                                                    </div>
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={cn(
+                                                                "text-[10px] uppercase tracking-widest font-bold",
+                                                                m.role === "user" ? "text-muted-foreground" : "text-accent"
                                                             )}>
-                                                                {m.role === "user" ? <Command className="w-5 h-5" /> : <Cpu className="w-5 h-5" />}
-                                                            </div>
-                                                            <div className="flex-1 space-y-2">
-                                                                <div className="flex items-center gap-3">
-                                                                    <span className={cn(
-                                                                        "text-[10px] uppercase tracking-widest font-bold font-mono",
-                                                                        m.role === "user" ? "text-muted-foreground" : "text-accent"
-                                                                    )}>
-                                                                        {m.role === "user" ? "USER_PROMPT" : (projectMode ? "INVENTOR_RESPONSE" : "NEXIS_RESPONSE")}
-                                                                    </span>
-                                                                    <span className="text-[9px] text-muted-foreground/40 font-mono">{new Date().toLocaleTimeString()}</span>
-                                                                    {isAi && isLastMessage && isLoading && (
-                                                                        <span className="text-[8px] text-accent animate-pulse uppercase tracking-wider">[PROCESSING_STREAM]</span>
-                                                                    )}
-                                                                </div>
-
-                                                                <div className={cn(
-                                                                    "text-sm leading-relaxed whitespace-pre-wrap font-sans mix-blend-screen",
-                                                                    m.role === "user" ? "text-foreground/80" : "text-foreground"
-                                                                )}>
-                                                                    {isAi && isLastMessage && isLoading ? (
-                                                                        <span className="font-mono text-accent/90 filters drop-shadow-[0_0_5px_rgba(var(--color-accent),0.5)]">
-                                                                            {m.content.replace(/\[MEMORY: .*?\]/g, "")}
-                                                                            <span className="animate-pulse inline-block w-2 h-4 bg-accent align-middle ml-1" />
-                                                                        </span>
-                                                                    ) : (
-                                                                        // Render standard text for history or user to preserve Markdown/Readability
-                                                                        m.content.replace(/\[MEMORY: .*?\]/g, "")
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                                                {m.role === "user" ? "USER_PROMPT" : (projectMode ? "INVENTOR_RESPONSE" : "NEXIS_RESPONSE")}
+                                                            </span>
+                                                            <span className="text-[9px] text-muted-foreground/40">{new Date().toLocaleTimeString()}</span>
+                                                        </div>
+                                                        <div className={cn(
+                                                            "text-sm leading-relaxed whitespace-pre-wrap font-sans",
+                                                            m.role === "user" ? "text-foreground/80" : "text-foreground"
+                                                        )}>
+                                                            {m.content.replace(/\[MEMORY: .*?\]/g, "")}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )
-                                        })}
+                                                <div className="absolute -left-12 top-0 bottom-0 w-[1px] bg-border/20 group-hover:bg-accent/40 transition-colors" />
+                                            </div>
+                                        ))}
                                         {isLoading && (
                                             <div className="flex items-start gap-6 animate-pulse">
                                                 <div className="w-8 h-8 border border-accent/40 bg-accent/5 flex items-center justify-center text-accent">
