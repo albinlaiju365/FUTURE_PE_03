@@ -27,7 +27,7 @@ export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
 
     return (
         <div className={cn("fixed inset-0 -z-50 overflow-hidden bg-background", className)}>
-            <div className="absolute inset-0 bg-background/20 backdrop-blur-3xl" />
+            <div className="absolute inset-0 bg-background/20 backdrop-blur-xl" />
 
             {colors.map((color, i) => (
                 <motion.div

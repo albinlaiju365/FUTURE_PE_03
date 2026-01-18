@@ -80,6 +80,7 @@ export function PrinciplesSection() {
             start: "top 85%",
             toggleActions: "play none none reverse",
           },
+          willChange: "transform, opacity",
         })
       })
     }, sectionRef)
