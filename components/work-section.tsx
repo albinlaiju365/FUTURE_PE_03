@@ -12,37 +12,37 @@ const experiments = [
     title: "Real-time Voice",
     medium: "Voice AI",
     description: "Sub-100ms latency voice conversations with natural prosody and emotion modeling.",
-    span: "col-span-2 row-span-2",
+    span: "md:col-span-2 md:row-span-2",
   },
   {
     title: "Context Awareness",
     medium: "NLP Engine",
     description: "Deep understanding of conversation context across multiple turns.",
-    span: "col-span-1 row-span-1",
+    span: "md:col-span-1 md:row-span-1",
   },
   {
     title: "Multi-Language",
     medium: "Localization",
     description: "Seamless conversation in 50+ languages with cultural adaptation.",
-    span: "col-span-1 row-span-2",
+    span: "md:col-span-1 md:row-span-2",
   },
   {
     title: "Sentiment Detection",
     medium: "Analytics",
     description: "Real-time emotion recognition and adaptive response generation.",
-    span: "col-span-1 row-span-1",
+    span: "md:col-span-1 md:row-span-1",
   },
   {
     title: "Enterprise Integration",
     medium: "API & Webhooks",
     description: "Seamless integration with CRM, knowledge bases, and business systems.",
-    span: "col-span-2 row-span-1",
+    span: "md:col-span-2 md:row-span-1",
   },
   {
     title: "Compliance & Safety",
     medium: "Security",
     description: "GDPR, HIPAA compliant with advanced content filtering and audit logs.",
-    span: "col-span-1 row-span-1",
+    span: "md:col-span-1 md:row-span-1",
   },
 ]
 
