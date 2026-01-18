@@ -76,12 +76,12 @@ function ChatContent() {
                     const updated = [...currentMemories, fact];
                     localStorage.setItem("ai_memories", JSON.stringify(updated));
                     setMemories(updated);
-                    toast.custom((t) => (
-                        <div className="bg-accent/10 border border-accent/20 text-accent px-4 py-2 rounded-full text-xs font-mono flex items-center gap-2">
-                            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                            Memory Core Updated: "{fact}"
-                        </div>
-                    ), { duration: 3000 });
+                    // toast.custom((t) => (
+                    //     <div className="bg-accent/10 border border-accent/20 text-accent px-4 py-2 rounded-full text-xs font-mono flex items-center gap-2">
+                    //         <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    //         Memory Core Updated: "{fact}"
+                    //     </div>
+                    // ), { duration: 3000 });
                 }
             }
         }
