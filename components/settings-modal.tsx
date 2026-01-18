@@ -57,7 +57,7 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                     </DialogTitle>
                 </DialogHeader>
 
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as SettingsTab)} className="w-full flex flex-col md:flex-row gap-6 mt-4">
+                <Tabs value={activeTab} onValueChange={(v: string) => setActiveTab(v as SettingsTab)} className="w-full flex flex-col md:flex-row gap-6 mt-4">
                     <TabsList className="flex flex-col h-auto bg-transparent items-start gap-2 min-w-[150px]">
                         <TabsTrigger value="profile" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
                             <User className="w-4 h-4" /> Profile
