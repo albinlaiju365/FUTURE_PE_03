@@ -9,6 +9,11 @@ export function SecurityShield({ children }: { children: React.ReactNode }) {
     const [isViolation, setIsViolation] = useState(false)
     const [violationType, setViolationType] = useState("")
 
+    const triggerSecurityAlert = (type: string) => {
+        // Silently handle violation - measures are still blocked but no UI alert shown
+        console.warn(`Security violation: ${type}`)
+    }
+
     useEffect(() => {
         // 1. Disable Right Click
         const handleContextMenu = (e: MouseEvent) => {
@@ -52,10 +57,7 @@ export function SecurityShield({ children }: { children: React.ReactNode }) {
         }
     }, [])
 
-    const triggerSecurityAlert = (type: string) => {
-        // Silently handle violation - measures are still blocked but no UI alert shown
-        console.warn(`Security violation: ${type}`)
-    }
+
 
     return (
         <>

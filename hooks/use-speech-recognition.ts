@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 export function useSpeechRecognition() {
     const [isListening, setIsListening] = useState(false)
     const [transcript, setTranscript] = useState("")
-    const [recognition, setRecognition] = useState<any>(null)
+    const recognitionRef = useRef<any>(null)
+    const [hasSupport, setHasSupport] = useState(false)
 
     useEffect(() => {
         if (typeof window !== "undefined") {
@@ -17,12 +18,37 @@ export function useSpeechRecognition() {
                 recognitionInstance.continuous = true
                 recognitionInstance.interimResults = true
                 recognitionInstance.lang = "en-US"
-                setRecognition(recognitionInstance)
+
+                recognitionInstance.onresult = (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    let finalTranscript = ""
+                    for (let i = event.resultIndex; i < event.results.length; ++i) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript
+                        }
+                    }
+                    if (finalTranscript) {
+                        setTranscript(prev => prev + " " + finalTranscript)
+                    }
+                }
+
+                recognitionInstance.onerror = (event: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+                    console.error("Speech recognition error", event.error)
+                    setIsListening(false)
+                }
+
+                recognitionInstance.onend = () => {
+                    setIsListening(false)
+                }
+
+                recognitionRef.current = recognitionInstance
+                // eslint-disable-next-line react-hooks/set-state-in-effect
+                setHasSupport(true)
             }
         }
     }, [])
 
     const startListening = useCallback(() => {
+        const recognition = recognitionRef.current
         if (recognition) {
             try {
                 recognition.start()
@@ -31,9 +57,10 @@ export function useSpeechRecognition() {
                 console.error("Speech recognition start failed:", error)
             }
         }
-    }, [recognition])
+    }, [])
 
     const stopListening = useCallback(() => {
+        const recognition = recognitionRef.current
         if (recognition) {
             try {
                 recognition.stop()
@@ -42,48 +69,27 @@ export function useSpeechRecognition() {
                 console.error("Speech recognition stop failed:", error)
             }
         }
-    }, [recognition])
+    }, [])
 
+    // Cleanup on unmount
     useEffect(() => {
-        if (!recognition) return
-
-        recognition.onresult = (event: any) => {
-            let finalTranscript = ""
-            for (let i = event.resultIndex; i < event.results.length; ++i) {
-                if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript
-                } else {
-                    // interim logic if needed, but for now we might just want to grab the latest
-                }
-            }
-            if (finalTranscript) {
-                setTranscript(prev => prev + " " + finalTranscript)
-            }
-        }
-
-        recognition.onerror = (event: any) => {
-            console.error("Speech recognition error", event.error)
-            setIsListening(false)
-        }
-
-        recognition.onend = () => {
-            setIsListening(false)
-        }
-
         return () => {
-            recognition.onresult = null
-            recognition.onerror = null
-            recognition.onend = null
+            if (recognitionRef.current) {
+                recognitionRef.current.onresult = null
+                recognitionRef.current.onerror = null
+                recognitionRef.current.onend = null
+                // attempt stop?
+                try { recognitionRef.current.abort() } catch (e) { }
+            }
         }
-
-    }, [recognition])
+    }, [])
 
     return {
         isListening,
         transcript,
-        setTranscript, // To clear it if needed
+        setTranscript,
         startListening,
         stopListening,
-        hasSupport: !!recognition
+        hasSupport
     }
 }
