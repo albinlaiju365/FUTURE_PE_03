@@ -96,6 +96,7 @@ function ChatContent() {
     const [chats, setChats] = useState<{ id: string; title: string; messages: any[]; type: "standard" | "project"; mode?: "research" | "web" }[]>([])
     const [currentChatId, setCurrentChatId] = useState(Date.now().toString())
     const [isHistoryLoaded, setIsHistoryLoaded] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
 
     // Load history on mount
     useEffect(() => {
@@ -282,7 +283,7 @@ function ChatContent() {
                     {sidebarView === "explorer" && (
                         <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0a]">
                             {/* Top Actions */}
-                            <div className="p-3 space-y-1">
+                            <div className="p-3 space-y-3">
                                 <button
                                     onClick={() => handleNewChat("standard")}
                                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-white/5 rounded-lg transition-all group border border-border/20 hover:border-accent/40 bg-accent/5"
@@ -290,10 +291,17 @@ function ChatContent() {
                                     <SquarePen className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
                                     <span className="font-medium">New chat</span>
                                 </button>
-                                <button className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground/70 hover:text-foreground hover:bg-white/5 rounded-lg transition-colors group">
-                                    <Search className="w-4 h-4 text-muted-foreground group-hover:text-accent" />
-                                    <span>Search chats</span>
-                                </button>
+
+                                <div className="relative group">
+                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-accent transition-colors" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search chats..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full bg-[#0d0d0d] border border-border/20 rounded-md py-1.5 pl-9 pr-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-accent/40 focus:outline-none transition-all"
+                                    />
+                                </div>
 
                                 {/* Project History List */}
                                 <div className="mt-6 space-y-0.5">
@@ -307,10 +315,12 @@ function ChatContent() {
                                             <Plus className="w-3 h-3 group-hover:scale-110 transition-transform" />
                                         </button>
                                     </div>
-                                    {chats.filter(c => c.type === "project").length === 0 ? (
-                                        <div className="px-3 py-2 text-[9px] text-muted-foreground/30 italic uppercase">No project activity</div>
+                                    {chats.filter(c => c.type === "project" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                                        <div className="px-3 py-2 text-[9px] text-muted-foreground/30 italic uppercase">
+                                            {searchQuery ? "No matching projects" : "No project activity"}
+                                        </div>
                                     ) : (
-                                        chats.filter(c => c.type === "project").map((chat) => (
+                                        chats.filter(c => c.type === "project" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
                                             <div
                                                 key={chat.id}
                                                 onClick={() => {
@@ -344,10 +354,12 @@ function ChatContent() {
                             <div className="flex-1 overflow-y-auto mt-4 px-3 scrollbar-hide">
                                 <div className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.2em] px-3 mb-2">Your chats</div>
                                 <div className="space-y-0.5 pb-20">
-                                    {chats.filter(c => c.type === "standard").length === 0 ? (
-                                        <div className="px-3 py-4 text-[10px] text-muted-foreground/40 italic uppercase">No recent activity</div>
+                                    {chats.filter(c => c.type === "standard" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                                        <div className="px-3 py-4 text-[10px] text-muted-foreground/40 italic uppercase">
+                                            {searchQuery ? "No matching chats" : "No recent activity"}
+                                        </div>
                                     ) : (
-                                        chats.filter(c => c.type === "standard").map((chat) => (
+                                        chats.filter(c => c.type === "standard" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
                                             <div
                                                 key={chat.id}
                                                 onClick={() => {
