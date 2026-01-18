@@ -1,4 +1,4 @@
-import db from "@/lib/db";
+import * as db from "@/lib/db";
 
 export type MemoryType = "identity" | "project" | "behavioral" | "ephemeral";
 
@@ -20,60 +20,73 @@ export const MemoryManager = {
      * In a real vector DB, this would be semantic search.
      * For SQLite, we'll use keyword matching and recency/importance weighting.
      */
-    retrieve: (userId: number, query: string): MemoryV2[] => {
+    retrieve: async (userId: number, query: string): Promise<MemoryV2[]> => {
         // Simple heuristic: fetch all 'high' importance or 'identity' memories,
         // plus recent project memories.
-        // In a full implementation, we'd use embedding similarity here.
 
-        const stmt = db.prepare(`
-            SELECT * FROM memories_v2 
-            WHERE user_id = ? 
-            ORDER BY 
-                CASE importance 
-                    WHEN 'high' THEN 1 
-                    WHEN 'medium' THEN 2 
-                    ELSE 3 
-                END ASC,
-                last_accessed DESC
-            LIMIT 20
-        `);
+        try {
+            const { rows } = await db.sql`
+                SELECT * FROM memories_v2 
+                WHERE user_id = ${userId}
+                ORDER BY 
+                    CASE importance 
+                        WHEN 'high' THEN 1 
+                        WHEN 'medium' THEN 2 
+                        ELSE 3 
+                    END ASC,
+                    last_accessed DESC
+                LIMIT 20
+            `;
 
-        const memories = stmt.all(userId) as any[];
-
-        // Parse metadata JSON
-        return memories.map(m => ({
-            ...m,
-            metadata: m.metadata ? JSON.parse(m.metadata) : {}
-        }));
+            return rows.map((m: any) => ({
+                id: m.id,
+                user_id: m.user_id,
+                content: m.content,
+                type: m.type,
+                confidence: m.confidence,
+                importance: m.importance,
+                last_accessed: m.last_accessed,
+                decay_rate: m.decay_rate,
+                metadata: m.metadata || {} // Postgres handles JSONB parsing automatically
+            }));
+        } catch (error) {
+            console.error("Memory Retrieve Error:", error);
+            return [];
+        }
     },
 
     /**
      * Store a new structured memory.
      */
-    store: (
+    store: async (
         userId: number,
         content: string,
         type: MemoryType = "ephemeral",
         importance: "high" | "medium" | "low" = "medium"
     ) => {
-        const stmt = db.prepare(`
-            INSERT INTO memories_v2 (user_id, content, type, confidence, importance, last_accessed, decay_rate, metadata)
-            VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?)
-        `);
+        try {
+            // Default decay based on type
+            let decay: "slow" | "fast" | "none" = "slow";
+            if (type === "identity") decay = "none";
+            if (type === "ephemeral") decay = "fast";
 
-        // Default decay based on type
-        let decay: "slow" | "fast" | "none" = "slow";
-        if (type === "identity") decay = "none";
-        if (type === "ephemeral") decay = "fast";
-
-        stmt.run(userId, content, type, 0.9, importance, decay, "{}");
+            await db.sql`
+                INSERT INTO memories_v2 (user_id, content, type, confidence, importance, last_accessed, decay_rate, metadata)
+                VALUES (${userId}, ${content}, ${type}, 0.9, ${importance}, CURRENT_TIMESTAMP, ${decay}, '{}'::jsonb)
+            `;
+        } catch (error) {
+            console.error("Memory Store Error:", error);
+        }
     },
 
     /**
      * "Touch" a memory to update its last_accessed time (simulating reinforcement).
      */
-    reinforce: (memoryId: number) => {
-        const stmt = db.prepare(`UPDATE memories_v2 SET last_accessed = CURRENT_TIMESTAMP WHERE id = ?`);
-        stmt.run(memoryId);
+    reinforce: async (memoryId: number) => {
+        try {
+            await db.sql`UPDATE memories_v2 SET last_accessed = CURRENT_TIMESTAMP WHERE id = ${memoryId}`;
+        } catch (error) {
+            console.error("Memory Reinforce Error:", error);
+        }
     }
 };

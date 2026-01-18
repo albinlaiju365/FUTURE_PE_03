@@ -1,44 +1,32 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import { sql } from '@vercel/postgres';
 
-// Initialize the database
-// Initialize the database
-// Vercel Serverless Hack: Use /tmp for write access in production
-// Note: This data is ephemeral and will be wiped on cold starts.
-const dbPath = process.env.NODE_ENV === 'production'
-    ? '/tmp/nexis.db'
-    : path.join(process.cwd(), 'nexis.db');
+// Initialize tables if they don't exist
+// Note: In Postgres, we usually do this via migrations, but for this "self-repairing" system,
+// we will run a check on the first connection (or let the user call an init route).
+// For now, these are just helper strings for manual initialization if needed.
 
-const db = new Database(dbPath);
-
-// Create the users table if it doesn't exist
-const createUsersTable = `
+export const createUsersTableParams = `
     CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id SERIAL PRIMARY KEY,
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
 `;
 
-// Create the v2 memories table (Lifecycle-based)
-const createMemoriesTable = `
+export const createMemoriesTableParams = `
     CREATE TABLE IF NOT EXISTS memories_v2 (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER NOT NULL,
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
         content TEXT NOT NULL,
-        type TEXT NOT NULL, -- identity, project, behavioral, ephemeral
+        type TEXT NOT NULL,
         confidence REAL DEFAULT 1.0,
-        importance TEXT DEFAULT 'medium', -- high, medium, low
-        last_accessed DATETIME DEFAULT CURRENT_TIMESTAMP,
-        decay_rate TEXT DEFAULT 'slow', -- slow, fast, none
-        metadata TEXT, -- JSON string for tags, provenance
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-    )
+        importance TEXT DEFAULT 'medium',
+        last_accessed TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        decay_rate TEXT DEFAULT 'slow',
+        metadata JSONB
+    );
 `;
 
-db.exec(createUsersTable);
-db.exec(createMemoriesTable);
-
-export default db;
+export { sql };

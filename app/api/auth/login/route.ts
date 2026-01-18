@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import db from "@/lib/db";
+import { sql } from "@/lib/db";
 import { verifyPassword, generateToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -15,7 +15,8 @@ export async function POST(req: Request) {
         const { email, password } = loginSchema.parse(body);
 
         // Fetch User
-        const user: any = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+        const { rows } = await sql`SELECT * FROM users WHERE email = ${email}`;
+        const user = rows[0];
 
         if (!user || !(await verifyPassword(password, user.password))) {
             return NextResponse.json(

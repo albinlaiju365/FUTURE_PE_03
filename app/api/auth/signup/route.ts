@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import db from "@/lib/db";
+import { sql } from "@/lib/db";
 import { hashPassword, generateToken } from "@/lib/auth";
 import { cookies } from "next/headers";
 
@@ -16,8 +16,10 @@ export async function POST(req: Request) {
         const { name, email, password } = signupSchema.parse(body);
 
         // Check format
-        const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-        if (existingUser) {
+        // Note: Using await sql`...` returns a Result object with .rows
+        const { rows: existingUsers } = await sql`SELECT * FROM users WHERE email = ${email}`;
+
+        if (existingUsers.length > 0) {
             return NextResponse.json(
                 { error: "Terminal ID already allocated (Email exists)" },
                 { status: 409 }
@@ -26,11 +28,18 @@ export async function POST(req: Request) {
 
         // Create User
         const hashedPassword = await hashPassword(password);
-        const insert = db.prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
-        const result = insert.run(name, email, hashedPassword);
+
+        // Postgres: Use RETURNING id to get the ID back
+        const { rows: newUsers } = await sql`
+            INSERT INTO users (name, email, password) 
+            VALUES (${name}, ${email}, ${hashedPassword})
+            RETURNING id
+        `;
+
+        const userId = newUsers[0].id;
 
         // Generate Session
-        const user = { id: result.lastInsertRowid, email, name };
+        const user = { id: userId, email, name };
         const token = generateToken(user);
 
         // Set Cookie

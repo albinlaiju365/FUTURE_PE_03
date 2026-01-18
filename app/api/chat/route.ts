@@ -22,7 +22,7 @@ export async function POST(req: Request) {
 
         // 2. MEMORY RETRIEVAL LAYER (RAG)
         // Retrieve relevant memories based on the last message
-        const memories = MemoryManager.retrieve(userId, lastMessage);
+        const memories = await MemoryManager.retrieve(userId, lastMessage);
         const memoryContext = memories.map(m => `- ${m.content} (${m.type})`).join("\n");
 
         // 3. AGENTIC PLANNING LAYER (Gemini Flash)
