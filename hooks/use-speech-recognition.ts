@@ -61,15 +61,30 @@ export function useSpeechRecognition() {
         }
     }, [])
 
-    const startListening = useCallback(() => {
-        if (recognitionRef.current) {
+    const startListening = useCallback(async () => {
+        if (!recognitionRef.current) {
+            toast.error("Voice Not Supported", { description: "Your browser does not support speech recognition." })
+            return
+        }
+
+        try {
+            // Explicitly request microphone permission first to trigger the prompt
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+            // If we get here, permission is granted. We can stop the stream immediately
+            // because we only needed it to trigger the permission prompt.
+            stream.getTracks().forEach(track => track.stop());
+
+            // Now start the actual recognition
             try {
                 recognitionRef.current.start()
-            } catch (error) {
-                // Usually throws if already started
+            } catch (innerError) {
+                // Ignore if already started
             }
-        } else {
-            toast.error("Voice Not Supported", { description: "Your browser does not support speech recognition." })
+
+        } catch (error) {
+            console.error("Microphone permission denied:", error);
+            toast.error("Microphone Access Denied", { description: "Please allow microphone access in your browser settings." });
         }
     }, [])
 
