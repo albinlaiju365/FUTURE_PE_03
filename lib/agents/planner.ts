@@ -12,7 +12,7 @@ export const PlannerAgent = {
     async plan(query: string, context: string, persona: string) {
         try {
             const { object } = await generateObject({
-                model: google('gemini-1.5-flash'),
+                model: google('gemini-1.5-flash') as any,
                 schema: z.object({
                     intent: z.enum(['technical_explanation', 'creative_writing', 'debugging', 'casual_chat', 'system_command']),
                     reasoning: z.string().describe("Brief internal thought process about why this plan was chosen."),
