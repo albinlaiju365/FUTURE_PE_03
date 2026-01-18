@@ -31,6 +31,7 @@ import {
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 
 import { ProfileMenu } from "@/components/profile-menu"
@@ -53,9 +54,38 @@ function ChatContent() {
     const [isEnhancing, setIsEnhancing] = useState(false)
     const [projectMode, setProjectMode] = useState<"research" | "web" | null>(null)
 
+    // Load memories for context
+    const [memories, setMemories] = useState<string[]>([])
+    useEffect(() => {
+        const saved = localStorage.getItem("ai_memories")
+        if (saved) setMemories(JSON.parse(saved))
+    }, [])
+
     const chatConfig = useMemo(() => ({
-        body: { projectMode }
-    }), [projectMode])
+        body: { projectMode, memories },
+        onFinish: (message: any) => {
+            // Parse [MEMORY: ...] tags
+            const content = message.content;
+            const memoryMatch = content.match(/\[MEMORY: (.*?)\]/);
+
+            if (memoryMatch && memoryMatch[1]) {
+                const fact = memoryMatch[1];
+                const currentMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]");
+
+                if (!currentMemories.includes(fact)) {
+                    const updated = [...currentMemories, fact];
+                    localStorage.setItem("ai_memories", JSON.stringify(updated));
+                    setMemories(updated);
+                    toast.custom((t) => (
+                        <div className="bg-accent/10 border border-accent/20 text-accent px-4 py-2 rounded-full text-xs font-mono flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                            Memory Core Updated: "{fact}"
+                        </div>
+                    ), { duration: 3000 });
+                }
+            }
+        }
+    }), [projectMode, memories])
 
     const { messages, input, handleInputChange, handleSubmit, isLoading, append, setInput, setMessages } = useChat(chatConfig) as any
     const scrollRef = useRef<HTMLDivElement>(null)
@@ -469,7 +499,7 @@ function ChatContent() {
                                                             "text-sm leading-relaxed whitespace-pre-wrap font-sans",
                                                             m.role === "user" ? "text-foreground/80" : "text-foreground"
                                                         )}>
-                                                            {m.content}
+                                                            {m.content.replace(/\[MEMORY: .*?\]/g, "")}
                                                         </div>
                                                     </div>
                                                 </div>
