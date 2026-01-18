@@ -7,6 +7,7 @@ import { useChat } from "@ai-sdk/react"
 import { useState, useRef, useEffect } from "react"
 import { Send, Mic, Paperclip, ImageIcon, File, Music, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 export function ChatbotUI({ onAuthTrigger }: { onAuthTrigger?: () => void }) {
   const router = useRouter()
@@ -22,21 +23,25 @@ export function ChatbotUI({ onAuthTrigger }: { onAuthTrigger?: () => void }) {
       memories
     },
     onFinish: (message) => {
-      // Check for tool calls in the response
-      if (message.toolInvocations) {
-        message.toolInvocations.forEach((tool) => {
-          if (tool.toolName === 'remember' && 'fact' in tool.args) {
-            const fact = (tool.args as any).fact;
-            const currentMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]");
-            if (!currentMemories.includes(fact)) {
-              const updated = [...currentMemories, fact];
-              localStorage.setItem("ai_memories", JSON.stringify(updated));
-              // Update local state without reload
-              setMemories(updated);
-              // toast.success("Memory Saved", { description: fact }); // Optional feedback
-            }
-          }
-        })
+      // Parse [MEMORY: ...] tags
+      const content = message.content;
+      const memoryMatch = content.match(/\[MEMORY: (.*?)\]/);
+
+      if (memoryMatch && memoryMatch[1]) {
+        const fact = memoryMatch[1];
+        const currentMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]");
+
+        if (!currentMemories.includes(fact)) {
+          const updated = [...currentMemories, fact];
+          localStorage.setItem("ai_memories", JSON.stringify(updated));
+          setMemories(updated);
+          toast.custom((t) => (
+            <div className="bg-accent/10 border border-accent/20 text-accent px-4 py-2 rounded-full text-xs font-mono flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+              Memory Core Updated: "{fact}"
+            </div>
+          ), { duration: 3000 });
+        }
       }
     }
   }) as any

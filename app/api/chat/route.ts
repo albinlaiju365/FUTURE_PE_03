@@ -34,8 +34,11 @@ ${SECURITY_PROTOCOL}
 ${memoryContext}
 
 MEMORY INSTRUCTIONS:
-- You have a long-term memory. Use the 'remember' tool to save IMPORTANT facts about the user (name, preferences, project details).
-- Do not ask to save, just do it when you learn something new.
+- You have a long-term memory.
+- To save a fact, write it at the END of your response in this exact format: [MEMORY: The fact content].
+- Example: "Nice to meet you! [MEMORY: User's name is John]"
+- Only save IMPORTANT facts (name, preferences, tech stack).
+- Do not ask to save, just do it.
 - Contextualize your answers based on "CORE MEMORIES".
 
 STYLE GUIDE:
@@ -58,18 +61,6 @@ Remember: You are NOT a robot. You are a friend who happens to be a genius at co
             messages,
             temperature: projectMode ? 0.9 : 0.8,
             system: systemPrompt,
-            tools: {
-                remember: {
-                    description: 'Save a fact about the user to long-term memory. Use this when the user tells you their name, preference, or specific project detail.',
-                    parameters: {
-                        type: 'object',
-                        properties: {
-                            fact: { type: 'string', description: 'The fact to remember (e.g. "User likes Python", "User name is Albin")' },
-                        },
-                        required: ['fact'],
-                    },
-                },
-            },
         });
 
         return result.toDataStreamResponse();
