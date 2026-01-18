@@ -54,16 +54,28 @@ function ChatContent() {
     const [activeTab, setActiveTab] = useState("chat.tsx")
     const [isEnhancing, setIsEnhancing] = useState(false)
     const [projectMode, setProjectMode] = useState<"research" | "web" | null>(null)
+    const [persona, setPersona] = useState("nexis")
 
     // Load memories for context
     const [memories, setMemories] = useState<string[]>([])
     useEffect(() => {
         const saved = localStorage.getItem("ai_memories")
         if (saved) setMemories(JSON.parse(saved))
+
+        const savedPersona = localStorage.getItem("nexis_persona")
+        if (savedPersona) setPersona(savedPersona)
+
+        // Listen for storage events (Settings changes)
+        const handleStorage = () => {
+            const newPersona = localStorage.getItem("nexis_persona")
+            if (newPersona) setPersona(newPersona)
+        }
+        window.addEventListener("storage", handleStorage)
+        return () => window.removeEventListener("storage", handleStorage)
     }, [])
 
     const chatConfig = useMemo(() => ({
-        body: { projectMode, memories },
+        body: { projectMode, memories, persona },
         onFinish: (message: any) => {
             // Parse [MEMORY: ...] tags
             const content = message.content;
@@ -658,7 +670,7 @@ function ChatContent() {
                             </form>
                             <div className="max-w-4xl mx-auto mt-2 flex justify-between items-center px-2">
                                 <span className="text-[8px] uppercase tracking-widest text-muted-foreground/50">
-                                    Neural Link: Active // Empathy Engine: Online // Model: {projectMode === "research" ? "NEXIS RESEARCH O1" : projectMode === "web" ? "NEXIS WEB INTEL" : "NEXIS Prime"}
+                                    Neural Link: Active // Empathy Engine: Online // Persona: {persona.toUpperCase()} // Model: {projectMode === "research" ? "NEXIS RESEARCH O1" : projectMode === "web" ? "NEXIS WEB INTEL" : "NEXIS Prime"}
                                 </span>
                                 <span className="text-[8px] uppercase tracking-widest text-muted-foreground/50">
                                     © NEXIS INTELLIGENCE 2025

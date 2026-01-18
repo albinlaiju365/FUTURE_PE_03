@@ -22,7 +22,7 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
 
     // Bot Settings
     const [temperature, setTemperature] = useState(0.7)
-    const [persona, setPersona] = useState("inventor")
+    const [persona, setPersona] = useState("nexis")
 
     // System Settings
     const [soundEnabled, setSoundEnabled] = useState(true)
@@ -32,10 +32,18 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
             setActiveTab(defaultTab)
             const storedName = localStorage.getItem("userName")
             const storedEmail = localStorage.getItem("userEmail")
+            const storedPersona = localStorage.getItem("nexis_persona")
             if (storedName) setUserName(storedName)
             if (storedEmail) setUserEmail(storedEmail)
+            if (storedPersona) setPersona(storedPersona)
         }
     }, [isOpen, defaultTab])
+
+    const handlePersonaChange = (newPersona: string) => {
+        setPersona(newPersona)
+        localStorage.setItem("nexis_persona", newPersona)
+        window.dispatchEvent(new Event("storage"))
+    }
 
     const handleSaveProfile = () => {
         if (userName) localStorage.setItem("userName", userName)
@@ -128,14 +136,14 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                                     <label className="font-mono text-[10px] uppercase text-muted-foreground">Base Persona</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
-                                            onClick={() => setPersona("inventor")}
+                                            onClick={() => handlePersonaChange("inventor")}
                                             className={`p-3 border text-left transition-all ${persona === 'inventor' ? 'border-accent bg-accent/5' : 'border-white/10 hover:border-white/20'}`}
                                         >
                                             <div className="font-bold text-xs uppercase mb-1">The Inventor</div>
                                             <div className="text-[10px] text-muted-foreground">Eccentric, brilliant, chaotic.</div>
                                         </button>
                                         <button
-                                            onClick={() => setPersona("nexis")}
+                                            onClick={() => handlePersonaChange("nexis")}
                                             className={`p-3 border text-left transition-all ${persona === 'nexis' ? 'border-accent bg-accent/5' : 'border-white/10 hover:border-white/20'}`}
                                         >
                                             <div className="font-bold text-xs uppercase mb-1">NEXIS Core</div>

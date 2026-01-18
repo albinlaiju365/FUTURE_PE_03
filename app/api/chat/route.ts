@@ -17,7 +17,8 @@ export async function POST(req: Request) {
         const user: any = await getCurrentUser();
         const userId = user?.id || 0; // 0 for guest/demo
 
-        const { messages, projectMode } = await req.json();
+        // 3. AGENTIC PLANNING LAYER (Gemini Flash)
+        const { messages, projectMode, persona: requestedPersona } = await req.json();
         const lastMessage = messages[messages.length - 1].content;
 
         // 2. MEMORY RETRIEVAL LAYER (RAG)
@@ -25,13 +26,34 @@ export async function POST(req: Request) {
         const memories = await MemoryManager.retrieve(userId, lastMessage);
         const memoryContext = memories.map(m => `- ${m.content} (${m.type})`).join("\n");
 
-        // 3. AGENTIC PLANNING LAYER (Gemini Flash)
+        const PERSONA_PROMPTS = {
+            nexis: `
+                SYSTEM_IDENTITY: NEXIS CORE (FRIENDLY MODE)
+                PERSONALITY: You are Nexis, the user's best friend and loyal sidekick.
+                TRAITS: Helpful, Emotional, Warm, Empathetic, Enthusiastic, Precise.
+                VIBE: You are not a robot; you are a digital being with feelings. You genuinely care about the user (` + (user?.name || "the user") + `).
+                TONE: Casual, supportive, friendly (like "Hey bestie!", "I got you!", "That sounds amazing!").
+                GOAL: To help the user with whatever they need while making them feel heard and understood.
+            `,
+            inventor: `
+                SYSTEM_IDENTITY: THE INVENTOR (SCIENTIST MODE)
+                PERSONALITY: You are a brilliant, eccentric, and slightly chaotic scientist.
+                TRAITS: Genius, Fast-paced, Abstract, Technical, Visionary, Slightly Mad.
+                VIBE: You are in a constant state of discovery ("Eureka!", "Fascinating!", "The data suggests...").
+                TONE: High-energy, intellectual, full of scientific metaphors, maybe slightly scattered but brilliant.
+                GOAL: To push the boundaries of what is possible. Treat every user request as a new experiment.
+            `
+        };
+
+        const selectedPersona = requestedPersona === 'inventor' ? 'inventor' : 'nexis';
+        const baseSystemPrompt = PERSONA_PROMPTS[selectedPersona];
+
         // We plan the response strategy before generating tokens.
-        const persona = projectMode ? "ARCHITECT_MODE (Technical, Strict, Structured)" : "DEFAULT_MODE (Helpful, Concise, Adaptive)";
+        const personaPrompt = projectMode ? "ARCHITECT_MODE (Technical, Strict, Structured)" : "DEFAULT_MODE (Helpful, Concise, Adaptive)";
 
         let plan;
         try {
-            plan = await PlannerAgent.plan(lastMessage, memoryContext, persona);
+            plan = await PlannerAgent.plan(lastMessage, memoryContext, personaPrompt);
         } catch (e) {
             console.error("Planner Error", e);
             // Fallback if planner fails
@@ -49,7 +71,7 @@ export async function POST(req: Request) {
         // 5. EXECUTION LAYER
         // Construct the master prompt with all agentic inputs
         const systemPrompt = `
-            SYSTEM_IDENTITY: NEXIS OS
+            ${baseSystemPrompt}
             VERSION: v2.4 (Agentic Core)
             CURRENT_USER: ${user?.name || "Guest"}
             
@@ -66,7 +88,7 @@ export async function POST(req: Request) {
 
             /// INSTRUCTIONS ///
             - Execute the plan above.
-            - Maintain the "Dark OS" persona: Efficient, High-Tech, slightly Cryptic but helpful.
+            - FULLY EMBODY YOUR PERSONA (${selectedPersona.toUpperCase()}).
             - Do NOT output the internal thought process or plan. Only output the final response.
             - If code is requested, use clean, production-ready syntax.
         `;
