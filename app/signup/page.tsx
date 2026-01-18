@@ -149,7 +149,7 @@ export default function SignupPage({
                     )}
 
                     {/* Right Side - Form */}
-                    <div className={cn("p-10 md:p-12 bg-background/40", isModal ? "md:col-span-1 p-4 bg-transparent" : "md:col-span-3")}>
+                    <div className={cn("p-6 md:p-12 bg-background/40", isModal ? "md:col-span-1 p-4 bg-transparent" : "md:col-span-3")}>
                         {!isModal && (
                             <div className="mb-10 lg:hidden text-center">
                                 <Link href="/" className="inline-block mb-4">

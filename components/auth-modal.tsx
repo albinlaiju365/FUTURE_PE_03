@@ -52,10 +52,10 @@ export function AuthModal({ isOpen, onClose, initialMode = "login", onSuccess }:
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
                         className="relative w-full max-w-lg z-10"
                     >
-                        {/* Close Button - Now Outside the content area */}
+                        {/* Close Button - Responsive Position */}
                         <button
                             onClick={onClose}
-                            className="absolute -top-12 -right-12 z-50 p-3 text-muted-foreground hover:text-white transition-all hover:scale-110 active:scale-90"
+                            className="absolute top-0 right-0 md:-top-12 md:-right-12 z-50 p-3 text-muted-foreground hover:text-white transition-all hover:scale-110 active:scale-90"
                         >
                             <X className="w-6 h-6" />
                         </button>

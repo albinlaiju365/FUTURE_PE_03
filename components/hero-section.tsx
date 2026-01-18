@@ -62,7 +62,7 @@ export function HeroSection({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
           enterprise-grade AI models.
         </p>
 
-        <div className="mt-16 flex items-center gap-8">
+        <div className="mt-16 flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8">
           <a
             href="#work"
             className="group inline-flex items-center gap-3 border border-foreground/20 px-6 py-3 font-mono text-xs uppercase tracking-widest text-foreground hover:border-accent hover:text-accent transition-all duration-200"

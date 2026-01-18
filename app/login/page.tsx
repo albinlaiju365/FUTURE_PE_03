@@ -110,7 +110,7 @@ export default function LoginPage({
                     {/* Top Status Bar */}
                     {!isModal && <div className="h-0.5 w-full bg-accent/30" />}
 
-                    <div className={cn("p-10 md:p-12", isModal && "p-4")}>
+                    <div className={cn("p-6 md:p-12", isModal && "p-4")}>
                         <div className="mb-10 text-center">
                             {!isModal && (
                                 <motion.div

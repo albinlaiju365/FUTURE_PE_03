@@ -94,7 +94,7 @@ export function WorkSection() {
 
   return (
     <section ref={sectionRef} id="work" className="relative py-32 pl-6 md:pl-28 pr-6 md:pr-12">
-      <div ref={headerRef} className="mb-16 flex items-end justify-between">
+      <div ref={headerRef} className="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <span className="font-mono text-[10px] uppercase tracking-[0.3em] text-accent">02 / Capabilities</span>
           <h2 className="mt-4 font-[var(--font-bebas)] text-5xl md:text-7xl tracking-tight">CORE FEATURES</h2>
@@ -106,7 +106,7 @@ export function WorkSection() {
 
       <div
         ref={gridRef}
-        className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 auto-rows-[180px] md:auto-rows-[200px]"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 auto-rows-[200px]"
       >
         {experiments.map((experiment, index) => (
           <WorkCard key={index} experiment={experiment} index={index} persistHover={index === 0} />

@@ -180,7 +180,7 @@ function ChatContent() {
     return (
         <div className="flex h-screen bg-[#050505] text-foreground font-mono selection:bg-accent selection:text-background overflow-hidden">
             {/* Activity Bar (Slim Left) */}
-            <div className="w-12 border-r border-border/40 flex flex-col items-center py-4 gap-6 bg-[#080808] z-20">
+            <div className="hidden md:flex w-12 border-r border-border/40 flex-col items-center py-4 gap-6 bg-[#080808] z-20">
                 <Link href="/">
                     <Cpu className="w-6 h-6 text-accent animate-pulse" />
                 </Link>
@@ -211,7 +211,7 @@ function ChatContent() {
 
             {/* Sidebar (Explorer) */}
             {sidebarOpen && (
-                <div className="w-64 border-r border-border/40 bg-[#0a0a0a] flex flex-col animate-in slide-in-from-left duration-300">
+                <div className="fixed inset-y-0 left-0 z-30 w-64 md:relative border-r border-border/40 bg-[#0a0a0a] flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out slide-in-from-left duration-300 md:duration-0 shadow-2xl md:shadow-none">
                     <div className="px-4 py-3 border-b border-border/40 flex justify-between items-center bg-[#0d0d0d]">
                         <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
                             {sidebarView === "explorer" && "EXPLORER: NEXIS_OS"}
@@ -394,8 +394,15 @@ function ChatContent() {
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 bg-[#050505] relative">
                 {/* Header Tabs */}
-                <div className="h-10 border-b border-border/40 bg-[#0d0d0d] flex items-center px-2 z-10">
-                    <div className="flex items-center gap-px h-full">
+                <div className="h-10 border-b border-border/40 bg-[#0d0d0d] flex items-center px-2 z-10 gap-2">
+                    <button
+                        onClick={() => setSidebarOpen(!sidebarOpen)}
+                        className="md:hidden p-1 text-muted-foreground hover:text-foreground"
+                    >
+                        <Menu className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex items-center gap-px h-full overflow-hidden">
                         <div className="flex items-center gap-px h-full overflow-x-auto scrollbar-hide">
                             {["chat.tsx"].map((tab) => (
                                 <div
@@ -427,7 +434,7 @@ function ChatContent() {
                 <div className="flex-1 flex flex-col min-h-0 relative">
                     <div
                         ref={scrollRef}
-                        className="flex-1 overflow-y-auto p-6 md:p-12 space-y-8 scrollbar-hide"
+                        className="flex-1 overflow-y-auto p-4 md:p-12 space-y-8 scrollbar-hide"
                     >
                         {activeTab === "chat.tsx" && (
                             <>
@@ -491,12 +498,12 @@ function ChatContent() {
 
                     {/* Input Bar - Standard Flow */}
                     {activeTab === "chat.tsx" && (
-                        <div className="p-6 bg-[#050505] border-t border-border/20 z-20 shrink-0">
+                        <div className="p-3 md:p-6 bg-[#050505] border-t border-border/20 z-20 shrink-0 mb-safe">
                             <form
                                 onSubmit={handleSubmit}
-                                className="max-w-4xl mx-auto flex items-end gap-2 bg-[#0d0d0d] border border-border/60 focus-within:border-accent p-2 transition-all shadow-2xl"
+                                className="max-w-4xl mx-auto flex items-end gap-2 bg-[#0d0d0d] border border-border/60 focus-within:border-accent p-2 transition-all shadow-2xl rounded-lg md:rounded-none"
                             >
-                                <div className="flex-1 min-h-[44px] flex flex-col justify-center px-4">
+                                <div className="flex-1 min-h-[44px] flex flex-col justify-center px-2 md:px-4">
                                     <textarea
                                         value={input}
                                         onChange={handleInputChange}
