@@ -53,10 +53,17 @@ export function ProfileMenu({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
         if (email) setUserEmail(email)
     }, [])
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        try {
+            await fetch("/api/auth/logout", { method: "POST" })
+        } catch (e) {
+            console.error("Logout failed", e)
+        }
+
         localStorage.removeItem("isLoggedIn")
         localStorage.removeItem("userName")
         localStorage.removeItem("userEmail")
+
         toast.info("Session terminated", {
             description: "You have been logged out of the terminal.",
         })

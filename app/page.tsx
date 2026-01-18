@@ -18,13 +18,28 @@ export default function Page() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
 
   useEffect(() => {
-    // Sync login state
-    const checkAuth = () => {
-      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true")
+    // Sync login state with server session
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me")
+        const data = await res.json()
+        if (data.user) {
+          setIsLoggedIn(true)
+          // Sync local for other components if needed
+          localStorage.setItem("isLoggedIn", "true")
+          localStorage.setItem("userName", data.user.name)
+          localStorage.setItem("userEmail", data.user.email)
+        } else {
+          setIsLoggedIn(false)
+          localStorage.removeItem("isLoggedIn")
+        }
+      } catch (e) {
+        setIsLoggedIn(false)
+      }
     }
 
     checkAuth()
-    // Listen for storage changes (for across tabs/components)
+    // Listen for storage changes (for across tabs updates still useful)
     window.addEventListener('storage', checkAuth)
     return () => window.removeEventListener('storage', checkAuth)
   }, [])

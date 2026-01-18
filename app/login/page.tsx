@@ -44,22 +44,25 @@ export default function LoginPage({
     async function onSubmit(data: LoginValues) {
         setIsLoading(true)
         try {
-            console.log("Login Request:", data)
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
+            })
 
-            // Verify credentials against mock database
-            const users = JSON.parse(localStorage.getItem("registeredUsers") || "[]")
-            const user = users.find((u: any) => u.email === data.email && u.password === data.password)
+            const result = await res.json()
 
-            if (!user) {
-                throw new Error("Invalid terminal identifier or access key.")
+            if (!res.ok) {
+                throw new Error(result.error || "Invalid credentials")
             }
 
+            // Sync legacy storage for UI
             localStorage.setItem("isLoggedIn", "true")
-            localStorage.setItem("userEmail", user.email)
-            localStorage.setItem("userName", user.name)
+            localStorage.setItem("userName", result.user.name)
+            localStorage.setItem("userEmail", result.user.email)
 
             toast.success("Identity verified", {
-                description: `Terminal session authorized for ${user.email}. Welcome back.`,
+                description: `Terminal session authorized for ${result.user.email}. Welcome back.`,
             })
 
             if (onSuccess) {
@@ -69,9 +72,9 @@ export default function LoginPage({
                     router.push("/chat")
                 }, 1000)
             }
-        } catch (error) {
-            toast.error("Authorization denied", {
-                description: "Invalid credentials or security lockout. Access revoked.",
+        } catch (error: any) {
+            toast.error("Authorization Denied", {
+                description: error.message || "Invalid credentials or security lockout.",
             })
         } finally {
             setIsLoading(false)

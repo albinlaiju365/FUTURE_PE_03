@@ -47,27 +47,26 @@ export default function SignupPage({
     async function onSubmit(data: SignupValues) {
         setIsLoading(true)
         try {
-            // Simulate API call for now or implement real one
-            console.log("Signup Request:", data)
-
-            // Simulate user "database" in local storage
-            const users = JSON.parse(localStorage.getItem("registeredUsers") || "[]")
-            const userExists = users.some((u: any) => u.email === data.email)
-
-            if (userExists) {
-                throw new Error("Terminal ID already registered.")
-            }
-
-            users.push({
-                name: data.name,
-                email: data.email,
-                password: data.password // In a real app, this would be hashed
+            const res = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data),
             })
 
-            localStorage.setItem("registeredUsers", JSON.stringify(users))
+            const result = await res.json()
+
+            if (!res.ok) {
+                if (res.status === 409) {
+                    throw new Error("Terminal ID already allocated (Email exists)")
+                }
+                throw new Error(result.error || "Uplink failed")
+            }
+
+            // Sync legacy local storage for UI speed (optional, but keeps existing UI happy)
             localStorage.setItem("isLoggedIn", "true")
-            localStorage.setItem("userName", data.name)
-            localStorage.setItem("userEmail", data.email)
+            localStorage.setItem("userName", result.user.name)
+            localStorage.setItem("userEmail", result.user.email)
+            // Note: We don't store passwords locally anymore!
 
             toast.success("Operative protocol initialized!", {
                 description: `Welcome to Nexis, ${data.name}. Redirecting to terminal...`,
@@ -80,9 +79,9 @@ export default function SignupPage({
                     router.push("/chat")
                 }, 2000)
             }
-        } catch (error) {
-            toast.error("Uplink failed", {
-                description: "Security protocols prevented registration. Please try again.",
+        } catch (error: any) {
+            toast.error("Registration Failed", {
+                description: error.message || "Security protocols prevented registration.",
             })
         } finally {
             setIsLoading(false)
