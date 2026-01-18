@@ -15,7 +15,12 @@ export async function POST(req: Request) {
     try {
         // 1. AUTHENTICATION LAYER
         const user: any = await getCurrentUser();
-        const userId = user?.id || 0; // 0 for guest/demo
+
+        if (!user) {
+            return new Response("Unauthorized: Login required.", { status: 401 });
+        }
+
+        const userId = user.id;
 
         // 3. AGENTIC PLANNING LAYER (Gemini Flash)
         const { messages, projectMode, persona: requestedPersona } = await req.json();
