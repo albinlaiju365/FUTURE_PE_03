@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { User, Monitor, Bell, Settings, Save, Trash2, Volume2, VolumeX, RefreshCcw } from "lucide-react"
+import { User, Monitor, Bell, Settings, Save, Trash2, Volume2, VolumeX, RefreshCcw, BrainCircuit, X } from "lucide-react"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-type SettingsTab = "profile" | "bot" | "notifications" | "system"
+type SettingsTab = "profile" | "bot" | "notifications" | "system" | "memory"
 
 interface SettingsModalProps {
     isOpen: boolean
@@ -64,6 +64,9 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                         </TabsTrigger>
                         <TabsTrigger value="bot" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
                             <Monitor className="w-4 h-4" /> Bot Logic
+                        </TabsTrigger>
+                        <TabsTrigger value="memory" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
+                            <BrainCircuit className="w-4 h-4" /> Memory Bank
                         </TabsTrigger>
                         <TabsTrigger value="notifications" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
                             <Bell className="w-4 h-4" /> Comm Logs
@@ -140,6 +143,65 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                                         </button>
                                     </div>
                                 </div>
+                            </div>
+                        </TabsContent>
+
+                        {/* MEMORY TAB */}
+                        <TabsContent value="memory" className="space-y-6 mt-0">
+                            <div className="space-y-4">
+                                <div className="p-4 border border-accent/20 bg-accent/5 rounded-sm">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <BrainCircuit className="w-5 h-5 text-accent" />
+                                        <h3 className="font-bold text-sm text-accent">Neural Memory Bank</h3>
+                                    </div>
+                                    <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                        The AI automatically extracts and saves key facts from your conversations to personalize future interactions.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="font-mono text-[10px] uppercase text-muted-foreground flex justify-between">
+                                        <span>Stored Memories</span>
+                                        <span className="text-accent">{(JSON.parse(localStorage.getItem("ai_memories") || "[]")).length} Nodes</span>
+                                    </label>
+                                    <div className="h-[200px] overflow-y-auto border border-white/10 rounded-sm bg-black/20 p-2 space-y-2">
+                                        {(JSON.parse(localStorage.getItem("ai_memories") || "[]") as string[]).length === 0 ? (
+                                            <div className="flex flex-col items-center justify-center h-full text-muted-foreground/30 italic text-xs">
+                                                No memories formed yet.
+                                            </div>
+                                        ) : (
+                                            (JSON.parse(localStorage.getItem("ai_memories") || "[]") as string[]).map((mem, i) => (
+                                                <div key={i} className="group flex items-start justify-between p-3 bg-white/5 border border-white/5 hover:border-accent/30 transition-colors text-xs">
+                                                    <span className="text-white/80">{mem}</span>
+                                                    <button
+                                                        onClick={() => {
+                                                            const current = JSON.parse(localStorage.getItem("ai_memories") || "[]") as string[]
+                                                            const updated = current.filter((_, idx) => idx !== i)
+                                                            localStorage.setItem("ai_memories", JSON.stringify(updated))
+                                                            window.dispatchEvent(new Event("storage")) // Force update
+                                                            toast.success("Memory Node Deleted")
+                                                        }}
+                                                        className="opacity-0 group-hover:opacity-100 text-red-400 hover:bg-red-500/10 p-1 rounded-sm transition-all"
+                                                    >
+                                                        <X className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={() => {
+                                        localStorage.removeItem("ai_memories")
+                                        toast.success("Memory Bank Wiped")
+                                        // Force re-render trick would be better here but simple for now
+                                        setTimeout(() => window.location.reload(), 500)
+                                    }}
+                                    className="w-full flex items-center justify-center gap-2 p-3 border border-white/10 hover:bg-white/5 text-xs font-mono uppercase tracking-widest transition-colors text-muted-foreground hover:text-white"
+                                >
+                                    <RefreshCcw className="w-3 h-3" /> Clear All Memories
+                                </button>
                             </div>
                         </TabsContent>
 

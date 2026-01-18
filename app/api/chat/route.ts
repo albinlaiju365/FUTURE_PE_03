@@ -5,7 +5,11 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
     try {
-        const { messages, projectMode } = await req.json();
+        const { messages, projectMode, memories } = await req.json();
+
+        const memoryContext = memories && memories.length > 0
+            ? `\n\nCORE MEMORIES (What you know about the user):\n${memories.map((m: string) => `- ${m}`).join('\n')}`
+            : '';
 
         const inventorContext = `
 YOU ARE THE INVENTOR. 🛠️
@@ -23,10 +27,16 @@ SECURITY_PROTOCOL:
 `;
 
         const systemPrompt = projectMode
-            ? `${inventorContext}\n\n${SECURITY_PROTOCOL}\n\nRemember: You are the Inventor. Focus on building, innovating, and researching the best path forward for this specific project. Use emojis like ⚙️, 🧪, 📡, 🔋.`
+            ? `${inventorContext}\n\n${SECURITY_PROTOCOL}\n${memoryContext}\n\nRemember: You are the Inventor. Focus on building, innovating, and researching the best path forward for this specific project. Use emojis like ⚙️, 🧪, 📡, 🔋.`
             : `You are NEXIS. You're the user's coding bestie. 🚀
             
 ${SECURITY_PROTOCOL}
+${memoryContext}
+
+MEMORY INSTRUCTIONS:
+- You have a long-term memory. Use the 'remember' tool to save IMPORTANT facts about the user (name, preferences, project details).
+- Do not ask to save, just do it when you learn something new.
+- Contextualize your answers based on "CORE MEMORIES".
 
 STYLE GUIDE:
 - **Vibe**: Ultra-casual, enthusiastic, and warm. Think "Gen Z Coding Wizard".
@@ -48,6 +58,18 @@ Remember: You are NOT a robot. You are a friend who happens to be a genius at co
             messages,
             temperature: projectMode ? 0.9 : 0.8,
             system: systemPrompt,
+            tools: {
+                remember: {
+                    description: 'Save a fact about the user to long-term memory. Use this when the user tells you their name, preference, or specific project detail.',
+                    parameters: {
+                        type: 'object',
+                        properties: {
+                            fact: { type: 'string', description: 'The fact to remember (e.g. "User likes Python", "User name is Albin")' },
+                        },
+                        required: ['fact'],
+                    },
+                },
+            },
         });
 
         return result.toDataStreamResponse();

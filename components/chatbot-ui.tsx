@@ -10,7 +10,36 @@ import { useRouter } from "next/navigation"
 
 export function ChatbotUI({ onAuthTrigger }: { onAuthTrigger?: () => void }) {
   const router = useRouter()
-  const { input, handleInputChange } = useChat() as any
+  // Load memories for context
+  const [memories, setMemories] = useState<string[]>([])
+  useEffect(() => {
+    const saved = localStorage.getItem("ai_memories")
+    if (saved) setMemories(JSON.parse(saved))
+  }, [])
+
+  const { input, handleInputChange } = useChat({
+    body: {
+      memories
+    },
+    onFinish: (message) => {
+      // Check for tool calls in the response
+      if (message.toolInvocations) {
+        message.toolInvocations.forEach((tool) => {
+          if (tool.toolName === 'remember' && 'fact' in tool.args) {
+            const fact = (tool.args as any).fact;
+            const currentMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]");
+            if (!currentMemories.includes(fact)) {
+              const updated = [...currentMemories, fact];
+              localStorage.setItem("ai_memories", JSON.stringify(updated));
+              // Update local state without reload
+              setMemories(updated);
+              // toast.success("Memory Saved", { description: fact }); // Optional feedback
+            }
+          }
+        })
+      }
+    }
+  }) as any
   const [isLoading, setIsLoading] = useState(false)
   const [isListening, setIsListening] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
