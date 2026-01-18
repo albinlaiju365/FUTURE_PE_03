@@ -26,7 +26,8 @@ import {
     SquarePen,
     Image,
     Grid2X2,
-    Folder
+    Folder,
+    Trash2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -188,6 +189,21 @@ function ChatContent() {
         }
     };
 
+    const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
+        e.stopPropagation();
+        setChats(prev => prev.filter(c => c.id !== chatId));
+
+        if (currentChatId === chatId) {
+            handleNewChat("standard");
+        }
+
+        toast.promise(Promise.resolve(), {
+            loading: 'Deleting...',
+            success: 'Chat deleted',
+            error: 'Failed to delete'
+        });
+    };
+
     // Initial greeting on load
     useEffect(() => {
         if (messages.length === 0 && !hasTriggeredInit.current && !initialQuery) {
@@ -342,13 +358,19 @@ function ChatContent() {
                                                     setActiveTab("chat.tsx");
                                                 }}
                                                 className={cn(
-                                                    "px-3 py-2 text-[11px] rounded-lg cursor-pointer transition-all truncate border",
+                                                    "group relative px-3 py-2 text-[11px] rounded-lg cursor-pointer transition-all truncate border",
                                                     currentChatId === chat.id
                                                         ? "bg-accent/5 border-accent/30 text-accent"
                                                         : "text-muted-foreground/70 hover:text-foreground hover:bg-white/5 border-transparent hover:border-border/40"
                                                 )}
                                             >
-                                                {chat.title}
+                                                <div className="pr-6 truncate">{chat.title}</div>
+                                                <button
+                                                    onClick={(e) => handleDeleteChat(e, chat.id)}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-500 p-1 rounded transition-all"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
                                             </div>
                                         ))
                                     )}
@@ -381,13 +403,19 @@ function ChatContent() {
                                                     setActiveTab("chat.tsx");
                                                 }}
                                                 className={cn(
-                                                    "px-3 py-2.5 text-xs rounded-lg cursor-pointer transition-all truncate border",
+                                                    "group relative px-3 py-2.5 text-xs rounded-lg cursor-pointer transition-all truncate border",
                                                     currentChatId === chat.id
                                                         ? "bg-accent/10 border-accent/20 text-foreground"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-white/5 border-transparent hover:border-border/40"
                                                 )}
                                             >
-                                                {chat.title}
+                                                <div className="pr-6 truncate">{chat.title}</div>
+                                                <button
+                                                    onClick={(e) => handleDeleteChat(e, chat.id)}
+                                                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-500 p-1 rounded transition-all"
+                                                >
+                                                    <Trash2 className="w-3 h-3" />
+                                                </button>
                                             </div>
                                         ))
                                     )}
