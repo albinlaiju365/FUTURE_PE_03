@@ -94,6 +94,28 @@ function ChatContent() {
     // Dynamic History State
     const [chats, setChats] = useState<{ id: string; title: string; messages: any[]; type: "standard" | "project"; mode?: "research" | "web" }[]>([])
     const [currentChatId, setCurrentChatId] = useState(Date.now().toString())
+    const [isHistoryLoaded, setIsHistoryLoaded] = useState(false)
+
+    // Load history on mount
+    useEffect(() => {
+        const saved = localStorage.getItem("nexis_chat_history")
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved)
+                setChats(parsed)
+            } catch (e) {
+                console.error("Failed to parse chat history")
+            }
+        }
+        setIsHistoryLoaded(true)
+    }, [])
+
+    // Save history whenever it changes
+    useEffect(() => {
+        if (isHistoryLoaded) {
+            localStorage.setItem("nexis_chat_history", JSON.stringify(chats))
+        }
+    }, [chats, isHistoryLoaded])
 
     // Auto-generate title and sync history ONLY when message is finished
     useEffect(() => {
