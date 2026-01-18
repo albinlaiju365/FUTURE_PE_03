@@ -73,7 +73,7 @@ export function HeroSection({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
           <div className="flex items-center gap-6">
             <button
               onClick={() => onAuthClick?.("login")}
-              className="font-mono text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200"
+              className="font-mono text-xs uppercase tracking-widest text-foreground/70 hover:text-foreground transition-colors duration-200"
             >
               Sign In
             </button>

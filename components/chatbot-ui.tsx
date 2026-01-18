@@ -48,12 +48,12 @@ export function ChatbotUI({ onAuthTrigger }: { onAuthTrigger?: () => void }) {
       {/* Input Area */}
       <form onSubmit={onLocalSubmit} className="flex flex-col gap-3">
 
-        <div className="flex items-center gap-2 border border-border bg-input px-4 py-3 focus-within:border-accent transition-colors duration-200">
+        <div className="flex items-center gap-2 border border-border bg-input/50 backdrop-blur-sm px-4 py-3 focus-within:border-accent focus-within:ring-1 focus-within:ring-accent/20 transition-all duration-200 rounded-sm shadow-sm">
           <input
             value={input}
             onChange={handleInputChange}
             placeholder="Ask something..."
-            className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground outline-none font-mono"
+            className="flex-1 bg-transparent text-sm text-foreground placeholder-muted-foreground/70 outline-none font-mono"
             disabled={isLoading}
           />
         </div>
