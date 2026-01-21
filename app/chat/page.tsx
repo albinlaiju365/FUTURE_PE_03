@@ -516,7 +516,7 @@ function ChatContent() {
                         {activeTab === "chat.tsx" && (
                             <>
                                 {messages.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center p-4">
+                                    <div className="h-full flex flex-col items-center justify-center p-4 pb-48">
                                         <div className="w-full max-w-2xl flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
                                             {/* Hero Logo */}
                                             <div className="text-center space-y-2">
