@@ -79,7 +79,7 @@ export async function GET(request: Request) {
         cookieStore.set("nexis_session", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "strict",
+            sameSite: "lax",
             path: "/",
             maxAge: 60 * 60 * 24 * 30 // 30 days
         });
