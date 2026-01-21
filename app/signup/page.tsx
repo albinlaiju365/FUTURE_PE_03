@@ -8,7 +8,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight, User, Mail, Lock, Loader2, ShieldCheck, Eye, EyeOff, CheckCircle2 } from "lucide-react"
+import { ArrowRight, User, Mail, Lock, Loader2, ShieldCheck, Eye, EyeOff, CheckCircle2, Github, Chrome } from "lucide-react"
 import Link from "next/link"
 import { ScrambleTextOnHover } from "@/components/scramble-text"
 
@@ -250,6 +250,32 @@ export default function SignupPage({
                                 <div className="absolute inset-0 bg-gradient-to-r from-transparent via-accent/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                             </button>
                         </form>
+
+                        {!isModal && (
+                            <div className="mt-8">
+                                <div className="relative mb-6 text-center">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <div className="w-full border-t border-white/5"></div>
+                                    </div>
+                                    <span className="relative px-3 bg-transparent text-[8px] uppercase tracking-[0.5em] text-muted-foreground/30 font-mono italic">3rd Party Uplink</span>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <button className="flex items-center justify-center gap-3 border border-white/5 py-3 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group">
+                                        <Github className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                        GitHub
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => window.location.href = "/api/auth/google"}
+                                        className="flex items-center justify-center gap-3 border border-white/5 py-3 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group"
+                                    >
+                                        <Chrome className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
+                                        Google
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         <div className={cn("text-center", isModal ? "mt-6" : "mt-8")}>
                             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">
