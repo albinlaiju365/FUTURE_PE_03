@@ -705,7 +705,7 @@ function ChatContent() {
                                                     ].map((item, i) => (
                                                         <button
                                                             key={i}
-                                                            onClick={() => setInput(prev => prev + (prev ? " " : "") + item.label)}
+                                                            onClick={() => setInput((prev: string) => prev + (prev ? " " : "") + item.label)}
                                                             className="flex flex-col items-center gap-2 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 hover:border-accent/20 transition-all group"
                                                         >
                                                             <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-accent mb-1" />
