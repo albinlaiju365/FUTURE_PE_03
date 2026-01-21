@@ -256,7 +256,11 @@ export default function LoginPage({
                                         <Github className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                                         GitHub
                                     </button>
-                                    <button className="flex items-center justify-center gap-3 border border-white/5 py-4 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group">
+                                    <button
+                                        type="button"
+                                        onClick={() => window.location.href = "/api/auth/google"}
+                                        className="flex items-center justify-center gap-3 border border-white/5 py-4 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group"
+                                    >
                                         <Chrome className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                                         Google
                                     </button>

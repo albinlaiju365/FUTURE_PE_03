@@ -16,7 +16,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 // Generate JWT Token
 export function generateToken(payload: any): string {
-    return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' });
+    return jwt.sign(payload, JWT_SECRET, { expiresIn: '30d' });
 }
 
 // Verify JWT Token
