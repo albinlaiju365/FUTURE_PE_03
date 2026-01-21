@@ -34,8 +34,9 @@ import Link from "next/link"
 import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
-import { HackerText } from "@/components/hacker-text"
+import { AnimatedBackground } from "@/components/animated-background"
 
+import { HackerText } from "@/components/hacker-text"
 import { ProfileMenu } from "@/components/profile-menu"
 
 function ChatContent() {
@@ -468,6 +469,7 @@ function ChatContent() {
 
             {/* Main Content Area */}
             <div className="flex-1 flex flex-col min-w-0 bg-[#050505] relative">
+                <AnimatedBackground className="z-0 opacity-40" />
                 {/* Header Tabs */}
                 <div className="h-10 border-b border-border/40 bg-[#0d0d0d] flex items-center px-2 z-10 gap-2">
                     <button
@@ -518,21 +520,25 @@ function ChatContent() {
                                         <div className="w-full max-w-2xl flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
                                             {/* Hero Logo */}
                                             <div className="text-center space-y-2">
-                                                <h1 className="font-[var(--font-bebas)] text-6xl md:text-8xl tracking-wider text-foreground">
-                                                    VULCARIS
+                                                <h1 className="font-sans text-2xl text-foreground font-medium">
+                                                    Ready when you are.
                                                 </h1>
-                                                <p className="font-mono text-xs md:text-sm text-muted-foreground/60 tracking-[0.2em] uppercase">
-                                                    Enterprise Conversational Intelligence
-                                                </p>
                                             </div>
 
                                             {/* Centered Input Form */}
                                             <div className="w-full">
                                                 <form
                                                     onSubmit={handleSubmit}
-                                                    className="w-full flex items-end gap-2 bg-[#0d0d0d] border border-border/60 focus-within:border-accent p-3 transition-all shadow-2xl rounded-xl"
+                                                    className="w-full flex items-center gap-2 bg-[#212121] px-4 py-3 shadow-2xl rounded-3xl"
                                                 >
-                                                    <div className="flex-1 min-h-[44px] flex flex-col justify-center px-2">
+                                                    <button
+                                                        type="button"
+                                                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors bg-white/5 hover:bg-white/10 rounded-full"
+                                                        title="Add Attachment"
+                                                    >
+                                                        <Plus className="w-4 h-4" />
+                                                    </button>
+                                                    <div className="flex-1 flex flex-col justify-center px-2">
                                                         <textarea
                                                             value={input}
                                                             onChange={handleInputChange}
@@ -542,8 +548,8 @@ function ChatContent() {
                                                                     handleSubmit(e as any)
                                                                 }
                                                             }}
-                                                            placeholder="How can I help you regarding your project?"
-                                                            className="w-full bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/40 resize-none max-h-32 py-2 scrollbar-hide text-center md:text-left"
+                                                            placeholder="Ask anything"
+                                                            className="w-full bg-transparent border-none outline-none text-base placeholder:text-muted-foreground/50 resize-none max-h-32 py-1 scrollbar-hide"
                                                             rows={1}
                                                             disabled={isLoading}
                                                         />
@@ -551,51 +557,29 @@ function ChatContent() {
                                                     <div className="flex items-center gap-2">
                                                         <button
                                                             type="button"
-                                                            className="p-2 text-muted-foreground hover:text-accent transition-colors"
-                                                            title="Add File"
-                                                        >
-                                                            <Folder className="w-4 h-4" />
-                                                        </button>
-                                                        <button
-                                                            type="button"
                                                             onClick={isListening ? stopListening : startListening}
                                                             className={cn(
-                                                                "p-2 transition-colors relative",
-                                                                isListening ? "text-destructive hover:text-destructive/80" : "text-muted-foreground hover:text-accent"
+                                                                "p-2 transition-colors relative text-muted-foreground hover:text-foreground",
+                                                                isListening && "text-red-500"
                                                             )}
                                                             title={isListening ? "Stop Listening" : "Voice Input"}
                                                         >
-                                                            <Mic className={cn("w-4 h-4", isListening && "animate-pulse")} />
-                                                            {isListening && <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive animate-ping" />}
+                                                            <Mic className={cn("w-5 h-5", isListening && "animate-pulse")} />
                                                         </button>
                                                         <button
                                                             type="submit"
                                                             disabled={!input.trim() || isLoading}
-                                                            className="p-2 bg-accent text-background rounded-lg hover:bg-white transition-all disabled:opacity-30 disabled:hover:bg-accent"
+                                                            className={cn(
+                                                                "p-2 rounded-full transition-all flex items-center justify-center",
+                                                                input.trim() ? "bg-white text-black" : "bg-white/10 text-muted-foreground cursor-not-allowed"
+                                                            )}
                                                         >
-                                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
                                                         </button>
                                                     </div>
                                                 </form>
 
-                                                {/* Suggestions */}
-                                                <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-2 w-full">
-                                                    {[
-                                                        { icon: Terminal, label: "Generate Code" },
-                                                        { icon: Search, label: "Research Topic" },
-                                                        { icon: Image, label: "Analyze Image" },
-                                                        { icon: FileCode, label: "Refactor API" },
-                                                    ].map((item, i) => (
-                                                        <button
-                                                            key={i}
-                                                            onClick={() => setInput((prev: string) => prev + (prev ? " " : "") + item.label)}
-                                                            className="flex flex-col items-center gap-2 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 hover:border-accent/20 transition-all group"
-                                                        >
-                                                            <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-accent mb-1" />
-                                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-foreground">{item.label}</span>
-                                                        </button>
-                                                    ))}
-                                                </div>
+
                                             </div>
                                         </div>
                                     </div>
