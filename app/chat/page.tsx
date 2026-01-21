@@ -376,7 +376,6 @@ function ChatContent() {
 
                     {/* Scrollable Chat History */}
                     <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-hide space-y-4">
-
                         {/* Project Threads Group */}
                         <div>
                             <div className="px-3 mb-2 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest flex items-center justify-between group cursor-pointer hover:text-foreground transition-colors">
@@ -500,186 +499,122 @@ function ChatContent() {
                                 </div>
                             ))}
                         </div>
-                        <div className="ml-auto flex items-center gap-4 px-4 h-full border-l border-border/40">
-                            <span className="text-[10px] text-muted-foreground/60">NODE: 0xFF92</span>
-                            <Maximize2 className="w-3 h-3 text-muted-foreground cursor-pointer" />
-                        </div>
                     </div>
                 </div>
 
-                {/* Chat Display & Input Area Container */}
-                <div className="flex-1 flex flex-col min-h-0 relative">
+                {/* Unified Chat Rendering Area */}
+                <div className="flex-1 flex flex-col relative overflow-hidden">
+                    {/* Messages Scroll Area */}
                     <div
                         ref={scrollRef}
-                        className="flex-1 overflow-y-auto p-4 md:p-12 space-y-8 scrollbar-hide"
+                        className={cn(
+                            "flex-1 overflow-y-auto p-4 md:p-12 space-y-8 scrollbar-hide transition-all duration-500",
+                            messages.length === 0 ? "opacity-0 translate-y-4 pointer-events-none" : "opacity-100 translate-y-0"
+                        )}
                     >
-                        {activeTab === "chat.tsx" && (
-                            <>
-                                {messages.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center p-4 pb-48">
-                                        <div className="w-full max-w-2xl flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
-                                            {/* Hero Logo */}
-                                            <div className="text-center space-y-2">
-                                                <h1 className="font-sans text-2xl text-foreground font-medium">
-                                                    Ready when you are.
-                                                </h1>
-                                            </div>
+                        {messages.length > 0 && (
+                            <div className="pb-32 max-w-3xl mx-auto space-y-8">
+                                {messages.map((m: any, index: number) => {
+                                    const isLastMessage = index === messages.length - 1
+                                    const isAi = m.role !== "user"
 
-                                            {/* Centered Input Form */}
-                                            <div className="w-full">
-                                                <form
-                                                    onSubmit={handleSubmit}
-                                                    className="w-full flex items-center gap-2 bg-[#212121] px-4 py-3 shadow-2xl rounded-3xl"
-                                                >
-                                                    <button
-                                                        type="button"
-                                                        className="p-1.5 text-muted-foreground hover:text-foreground transition-colors bg-white/5 hover:bg-white/10 rounded-full"
-                                                        title="Add Attachment"
-                                                    >
-                                                        <Plus className="w-4 h-4" />
-                                                    </button>
-                                                    <div className="flex-1 flex flex-col justify-center px-2">
-                                                        <textarea
-                                                            value={input}
-                                                            onChange={handleInputChange}
-                                                            onKeyDown={(e) => {
-                                                                if (e.key === "Enter" && !e.shiftKey) {
-                                                                    e.preventDefault()
-                                                                    handleSubmit(e as any)
-                                                                }
-                                                            }}
-                                                            placeholder="Ask anything"
-                                                            className="w-full bg-transparent border-none outline-none text-base placeholder:text-muted-foreground/50 resize-none max-h-32 py-1 scrollbar-hide"
-                                                            rows={1}
-                                                            disabled={isLoading}
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center gap-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={isListening ? stopListening : startListening}
-                                                            className={cn(
-                                                                "p-2 transition-colors relative text-muted-foreground hover:text-foreground",
-                                                                isListening && "text-red-500"
-                                                            )}
-                                                            title={isListening ? "Stop Listening" : "Voice Input"}
-                                                        >
-                                                            <Mic className={cn("w-5 h-5", isListening && "animate-pulse")} />
-                                                        </button>
-                                                        <button
-                                                            type="submit"
-                                                            disabled={!input.trim() || isLoading}
-                                                            className={cn(
-                                                                "p-2 rounded-full transition-all flex items-center justify-center",
-                                                                input.trim() ? "bg-white text-black" : "bg-white/10 text-muted-foreground cursor-not-allowed"
-                                                            )}
-                                                        >
-                                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
-                                                        </button>
-                                                    </div>
-                                                </form>
+                                    return (
+                                        <div key={m.id} className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                            {/* Data Plate Container */}
+                                            <div className={cn(
+                                                "relative overflow-hidden p-6 rounded-lg transition-all duration-500",
+                                                "border border-white/5",
+                                                isAi ? "bg-[#0a0a0a]/80" : "bg-accent/5",
+                                                isAi && isLastMessage && isLoading ? "shadow-[0_0_30px_-5px_var(--color-accent)]/20 border-accent/30" : "hover:border-white/10"
+                                            )}>
+                                                {/* Scanline / Grid effect overlay */}
+                                                <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,18,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 opacity-20 pointer-events-none bg-[length:100%_4px,3px_100%]" />
 
+                                                {/* Decorative corner markers */}
+                                                {isAi && (
+                                                    <>
+                                                        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-accent/50" />
+                                                        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-accent/50" />
+                                                        <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-accent/50" />
+                                                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-accent/50" />
+                                                    </>
+                                                )}
 
-                                            </div>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="max-w-4xl mx-auto space-y-12 pb-4">
-                                        {messages.map((m: any, index: number) => {
-                                            const isLastMessage = index === messages.length - 1
-                                            const isAi = m.role !== "user"
-
-                                            return (
-                                                <div key={m.id} className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                                    {/* Data Plate Container */}
+                                                <div className="relative z-10 flex items-start gap-6">
                                                     <div className={cn(
-                                                        "relative overflow-hidden p-6 rounded-lg transition-all duration-500",
-                                                        "border border-white/5",
-                                                        isAi ? "bg-[#0a0a0a]/80" : "bg-accent/5",
-                                                        isAi && isLastMessage && isLoading ? "shadow-[0_0_30px_-5px_var(--color-accent)]/20 border-accent/30" : "hover:border-white/10"
+                                                        "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-sm border",
+                                                        m.role === "user" ? "border-muted-foreground/30 bg-muted/5" : "border-accent/40 bg-accent/5 text-accent shadow-[0_0_10px_-2px_var(--color-accent)]/30"
                                                     )}>
-                                                        {/* Scanline / Grid effect overlay */}
-                                                        <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,18,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 opacity-20 pointer-events-none bg-[length:100%_4px,3px_100%]" />
-
-                                                        {/* Decorative corner markers */}
-                                                        {isAi && (
-                                                            <>
-                                                                <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-accent/50" />
-                                                                <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-accent/50" />
-                                                                <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-accent/50" />
-                                                                <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-accent/50" />
-                                                            </>
-                                                        )}
-
-                                                        <div className="relative z-10 flex items-start gap-6">
-                                                            <div className={cn(
-                                                                "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-sm border",
-                                                                m.role === "user" ? "border-muted-foreground/30 bg-muted/5" : "border-accent/40 bg-accent/5 text-accent shadow-[0_0_10px_-2px_var(--color-accent)]/30"
+                                                        {m.role === "user" ? <Command className="w-5 h-5" /> : <Cpu className="w-5 h-5" />}
+                                                    </div>
+                                                    <div className="flex-1 space-y-2">
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={cn(
+                                                                "text-[10px] uppercase tracking-widest font-bold font-mono",
+                                                                m.role === "user" ? "text-muted-foreground" : "text-accent"
                                                             )}>
-                                                                {m.role === "user" ? <Command className="w-5 h-5" /> : <Cpu className="w-5 h-5" />}
-                                                            </div>
-                                                            <div className="flex-1 space-y-2">
-                                                                <div className="flex items-center gap-3">
-                                                                    <span className={cn(
-                                                                        "text-[10px] uppercase tracking-widest font-bold font-mono",
-                                                                        m.role === "user" ? "text-muted-foreground" : "text-accent"
-                                                                    )}>
-                                                                        {m.role === "user" ? "USER_PROMPT" : (projectMode ? "INVENTOR_RESPONSE" : "NEXIS_RESPONSE")}
-                                                                    </span>
-                                                                    <span className="text-[9px] text-muted-foreground/40 font-mono">{new Date().toLocaleTimeString()}</span>
-                                                                    {isAi && isLastMessage && isLoading && (
-                                                                        <span className="text-[8px] text-accent animate-pulse uppercase tracking-wider">[PROCESSING_STREAM]</span>
-                                                                    )}
-                                                                </div>
+                                                                {m.role === "user" ? "USER_PROMPT" : (projectMode ? "INVENTOR_RESPONSE" : "NEXIS_RESPONSE")}
+                                                            </span>
+                                                            <span className="text-[9px] text-muted-foreground/40 font-mono">{new Date().toLocaleTimeString()}</span>
+                                                        </div>
 
-                                                                <div className={cn(
-                                                                    "text-sm leading-relaxed whitespace-pre-wrap font-sans mix-blend-screen",
-                                                                    m.role === "user" ? "text-foreground/80" : "text-foreground"
-                                                                )}>
-                                                                    {isAi && isLastMessage && isLoading ? (
-                                                                        <span className="font-mono text-accent/90 filters drop-shadow-[0_0_5px_rgba(var(--color-accent),0.5)]">
-                                                                            {m.content.replace(/\[MEMORY: .*?\]/g, "")}
-                                                                            <span className="animate-pulse inline-block w-2 h-4 bg-accent align-middle ml-1" />
-                                                                        </span>
-                                                                    ) : (
-                                                                        // Render standard text for history or user to preserve Markdown/Readability
-                                                                        m.content.replace(/\[MEMORY: .*?\]/g, "")
-                                                                    )}
-                                                                </div>
-                                                            </div>
+                                                        <div className={cn(
+                                                            "text-sm leading-relaxed whitespace-pre-wrap font-sans mix-blend-screen",
+                                                            m.role === "user" ? "text-foreground/80" : "text-foreground"
+                                                        )}>
+                                                            {isAi && isLastMessage && isLoading ? (
+                                                                <span className="font-mono text-accent/90 filters drop-shadow-[0_0_5px_rgba(var(--color-accent),0.5)]">
+                                                                    {m.content.replace(/\[MEMORY: .*?\]/g, "")}
+                                                                    <span className="animate-pulse inline-block w-2 h-4 bg-accent align-middle ml-1" />
+                                                                </span>
+                                                            ) : (
+                                                                m.content.replace(/\[MEMORY: .*?\]/g, "")
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
-                                            )
-                                        })}
-                                        {isLoading && (
-                                            <div className="flex items-start gap-6 animate-pulse">
-                                                <div className="w-8 h-8 border border-accent/40 bg-accent/5 flex items-center justify-center text-accent">
-                                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                                </div>
-                                                <div className="flex-1 space-y-3">
-                                                    <div className="h-2 w-24 bg-accent/20 rounded-full" />
-                                                    <div className="space-y-2">
-                                                        <div className="h-2 w-full bg-foreground/10 rounded-full" />
-                                                        <div className="h-2 w-[80%] bg-foreground/10 rounded-full" />
-                                                    </div>
-                                                </div>
                                             </div>
-                                        )}
-                                    </div>
-                                )}
-                            </>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         )}
                     </div>
 
-                    {/* Input Bar - Standard Flow (Only visible when messages > 0) */}
-                    {activeTab === "chat.tsx" && messages.length > 0 && (
-                        <div className="p-3 md:p-6 bg-[#050505] border-t border-border/20 z-20 shrink-0 mb-safe">
+                    {/* Sliding Input Container */}
+                    <div
+                        className={cn(
+                            "absolute transition-all duration-700 ease-in-out w-full flex flex-col items-center justify-center p-4",
+                            messages.length === 0
+                                ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%]"
+                                : "top-auto bottom-0 left-1/2 -translate-x-1/2 translate-y-0 pb-6 bg-[#050505] border-t border-white/5 shadow-[0_-20px_40px_-5px_rgba(0,0,0,0.8)]"
+                        )}
+                    >
+                        {/* Wrapper for max-width that matches message width */}
+                        <div className="w-full max-w-3xl flex flex-col gap-8 transition-all duration-500">
+                            {/* Hero Text - Fades out when chat starts */}
+                            <div className={cn(
+                                "text-center space-y-2 transition-all duration-500 overflow-hidden",
+                                messages.length > 0 ? "opacity-0 h-0 scale-90" : "opacity-100 h-auto scale-100"
+                            )}>
+                                <h1 className="font-sans text-2xl text-foreground font-medium">
+                                    How can I help, {localStorage.getItem("userName")?.split(" ")[0] || "User"}?
+                                </h1>
+                            </div>
+
+                            {/* The Input Pill */}
                             <form
                                 onSubmit={handleSubmit}
-                                className="max-w-4xl mx-auto flex items-end gap-2 bg-[#0d0d0d] border border-border/60 focus-within:border-accent p-2 transition-all shadow-2xl rounded-lg md:rounded-none"
+                                className="w-full flex items-center gap-2 bg-[#212121] px-4 py-3 shadow-2xl rounded-3xl"
                             >
-                                <div className="flex-1 min-h-[44px] flex flex-col justify-center px-2 md:px-4">
+                                <button
+                                    type="button"
+                                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors bg-white/5 hover:bg-white/10 rounded-full"
+                                    title="Add Attachment"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                </button>
+                                <div className="flex-1 flex flex-col justify-center px-2">
                                     <textarea
                                         value={input}
                                         onChange={handleInputChange}
@@ -689,64 +624,48 @@ function ChatContent() {
                                                 handleSubmit(e as any)
                                             }
                                         }}
-                                        placeholder="EXECUTE INSTRUCTION..."
-                                        className="w-full bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/40 resize-none max-h-48 py-2 scrollbar-hide"
+                                        placeholder="Ask anything"
+                                        className="w-full bg-transparent border-none outline-none text-base placeholder:text-muted-foreground/50 resize-none max-h-32 py-1 scrollbar-hide"
                                         rows={1}
                                         disabled={isLoading}
                                     />
                                 </div>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        type="button"
-                                        onClick={handleEnhance}
-                                        disabled={isEnhancing || !input.trim() || isLoading}
-                                        className={cn(
-                                            "p-3 text-muted-foreground hover:text-accent transition-colors relative",
-                                            isEnhancing && "text-accent animate-pulse"
-                                        )}
-                                        title="Enhance Prompt"
-                                    >
-                                        {isEnhancing ? <Loader2 className="w-4 h-4 animate-spin text-accent" /> : <Wand2 className="w-4 h-4" />}
-                                        {isEnhancing && <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-accent animate-ping" />}
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="p-3 text-muted-foreground hover:text-accent transition-colors"
-                                        title="Add File"
-                                    >
-                                        <Folder className="w-4 h-4" />
-                                    </button>
+                                <div className="flex items-center gap-2">
                                     <button
                                         type="button"
                                         onClick={isListening ? stopListening : startListening}
                                         className={cn(
-                                            "p-3 transition-colors relative",
-                                            isListening ? "text-destructive hover:text-destructive/80" : "text-muted-foreground hover:text-accent"
+                                            "p-2 transition-colors relative text-muted-foreground hover:text-foreground",
+                                            isListening && "text-red-500"
                                         )}
                                         title={isListening ? "Stop Listening" : "Voice Input"}
                                     >
-                                        <Mic className={cn("w-4 h-4", isListening && "animate-pulse")} />
-                                        {isListening && <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-destructive animate-ping" />}
+                                        <Mic className={cn("w-5 h-5", isListening && "animate-pulse")} />
                                     </button>
                                     <button
                                         type="submit"
                                         disabled={!input.trim() || isLoading}
-                                        className="p-3 bg-accent text-background hover:bg-white transition-all disabled:opacity-30 flex items-center justify-center"
+                                        className={cn(
+                                            "p-2 rounded-full transition-all flex items-center justify-center",
+                                            input.trim() ? "bg-white text-black" : "bg-white/10 text-muted-foreground cursor-not-allowed"
+                                        )}
                                     >
-                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
                                     </button>
                                 </div>
                             </form>
-                            <div className="max-w-4xl mx-auto mt-2 flex justify-between items-center px-2">
-                                <span className="text-[8px] uppercase tracking-widest text-muted-foreground/50">
-                                    Neural Link: Active // Empathy Engine: Online // Persona: {persona.toUpperCase()} // Model: {projectMode === "research" ? "NEXIS RESEARCH O1" : projectMode === "web" ? "NEXIS WEB INTEL" : "NEXIS Prime"}
-                                </span>
-                                <span className="text-[8px] uppercase tracking-widest text-muted-foreground/50">
-                                    © NEXIS INTELLIGENCE 2025
+
+                            {/* Footer Meta - Fades IN when chat starts */}
+                            <div className={cn(
+                                "flex justify-between items-center px-2 transition-all duration-700 delay-300",
+                                messages.length > 0 ? "opacity-100 max-h-10 mt-2" : "opacity-0 max-h-0 overflow-hidden"
+                            )}>
+                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40">
+                                    VULCARIS AI
                                 </span>
                             </div>
                         </div>
-                    )}
+                    </div>
                 </div>
             </div>
         </div>
