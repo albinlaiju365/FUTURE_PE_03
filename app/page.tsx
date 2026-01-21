@@ -25,10 +25,12 @@ export default function Page() {
         const data = await res.json()
         if (data.user) {
           setIsLoggedIn(true)
-          // Sync local for other components if needed
           localStorage.setItem("isLoggedIn", "true")
           localStorage.setItem("userName", data.user.name)
           localStorage.setItem("userEmail", data.user.email)
+
+          // Auto-redirect to chat if valid session exists
+          window.location.href = "/chat"
         } else {
           setIsLoggedIn(false)
           localStorage.removeItem("isLoggedIn")
