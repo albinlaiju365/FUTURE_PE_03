@@ -348,238 +348,121 @@ function ChatContent() {
 
     return (
         <div className="flex h-screen bg-[#050505] text-foreground font-mono selection:bg-accent selection:text-background overflow-hidden">
-            {/* Activity Bar (Slim Left) */}
-            <div className="hidden md:flex w-12 border-r border-border/40 flex-col items-center py-4 gap-6 bg-[#080808] z-20">
-                <Link href="/">
-                    <Cpu className="w-6 h-6 text-accent animate-pulse" />
-                </Link>
-                <div className="flex flex-col gap-5 mt-4">
-                    <div onClick={() => { setSidebarView("explorer"); setSidebarOpen(true) }} className={cn("cursor-pointer transition-colors", sidebarView === "explorer" ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                        <MessageSquare className="w-5 h-5" />
-                    </div>
-                    <div onClick={() => { setSidebarView("search"); setSidebarOpen(true) }} className={cn("cursor-pointer transition-colors", sidebarView === "search" ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                        <Search className="w-5 h-5" />
-                    </div>
-                    <div onClick={() => { setSidebarView("git"); setSidebarOpen(true) }} className={cn("cursor-pointer transition-colors", sidebarView === "git" ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                        <Github className="w-5 h-5" />
-                    </div>
-                    <div onClick={() => { setSidebarView("database"); setSidebarOpen(true) }} className={cn("cursor-pointer transition-colors", sidebarView === "database" ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                        <Database className="w-5 h-5" />
-                    </div>
-                    <div onClick={() => { setSidebarView("layers"); setSidebarOpen(true) }} className={cn("cursor-pointer transition-colors", sidebarView === "layers" ? "text-foreground" : "text-muted-foreground hover:text-foreground")}>
-                        <Layers className="w-5 h-5" />
-                    </div>
-                </div>
-                <div className="mt-auto flex flex-col items-center gap-4 pb-2">
-                    <ProfileMenu />
-                    <button className="p-2 text-muted-foreground/30 hover:text-accent transition-colors">
-                        <span className="font-[var(--font-bebas)] text-lg">N</span>
-                    </button>
-                </div>
-            </div>
-
-            {/* Sidebar (Explorer) */}
+            {/* Unified Sidebar (ChatGPT Style) */}
             {sidebarOpen && (
-                <div className="fixed inset-y-0 left-0 z-30 w-64 md:relative border-r border-border/40 bg-[#0a0a0a] flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out slide-in-from-left duration-300 md:duration-0 shadow-2xl md:shadow-none">
-                    <div className="px-4 py-3 border-b border-border/40 flex justify-between items-center bg-[#0d0d0d]">
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                            {sidebarView === "explorer" && "EXPLORER: NEXIS_OS"}
-                            {sidebarView === "search" && "SEARCH: GLOBAL"}
-                            {sidebarView === "git" && "SOURCE_CONTROL"}
-                            {sidebarView === "settings" && "SYSTEM_CONFIG"}
-                            {sidebarView === "database" && "DATA_GRIDS"}
-                            {sidebarView === "layers" && "ARCH_LAYERS"}
-                        </span>
+                <div className="fixed inset-y-0 left-0 z-30 w-[260px] border-r border-border/40 bg-[#080808] flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out slide-in-from-left duration-300 shadow-2xl md:relative md:shadow-none">
+                    {/* Mobile Header */}
+                    <div className="md:hidden px-4 py-3 border-b border-border/40 flex justify-between items-center bg-[#0d0d0d]">
+                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Menu</span>
                         <div onClick={() => setSidebarOpen(false)} className="cursor-pointer hover:text-accent transition-colors">
-                            <X className="w-3 h-3 text-muted-foreground" />
+                            <X className="w-4 h-4 text-muted-foreground" />
                         </div>
                     </div>
 
-                    {sidebarView === "explorer" && (
-                        <div className="flex-1 flex flex-col min-h-0 bg-[#0a0a0a]">
-                            {/* Top Actions */}
-                            <div className="p-3 space-y-3">
-                                <button
-                                    onClick={() => handleNewChat("standard")}
-                                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-white/5 rounded-lg transition-all group border border-border/20 hover:border-accent/40 bg-accent/5"
-                                >
-                                    <SquarePen className="w-4 h-4 text-accent group-hover:scale-110 transition-transform" />
-                                    <span className="font-medium">New chat</span>
-                                </button>
+                    {/* New Chat & Actions */}
+                    <div className="p-3">
+                        <button
+                            onClick={() => handleNewChat("standard")}
+                            className="w-full flex items-center gap-3 px-3 py-3 text-sm text-foreground hover:bg-white/5 rounded-lg transition-all border border-border/20 hover:border-accent/40 bg-[#0a0a0a] group"
+                        >
+                            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
+                                <Plus className="w-4 h-4 text-accent" />
+                            </div>
+                            <span className="font-medium">New chat</span>
+                            <SquarePen className="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                        </button>
+                    </div>
 
-                                <div className="relative group">
-                                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground group-focus-within:text-accent transition-colors" />
-                                    <input
-                                        type="text"
-                                        placeholder="Search chats..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full bg-[#0d0d0d] border border-border/20 rounded-md py-1.5 pl-9 pr-2 text-xs text-foreground placeholder:text-muted-foreground/50 focus:border-accent/40 focus:outline-none transition-all"
-                                    />
-                                </div>
+                    {/* Scrollable Chat History */}
+                    <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-hide space-y-4">
 
-                                {/* Project History List */}
-                                <div className="mt-6 space-y-0.5">
-                                    <div className="flex items-center justify-between px-3 mb-2">
-                                        <div className="text-[9px] font-bold text-muted-foreground/30 uppercase tracking-[0.2em]">Project Threads</div>
-                                        <button
-                                            onClick={() => handleNewChat("project")}
-                                            className="p-1 hover:bg-accent/10 text-accent/60 hover:text-accent rounded transition-colors group"
-                                            title="New project thread"
+                        {/* Project Threads Group */}
+                        <div>
+                            <div className="px-3 mb-2 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest flex items-center justify-between group cursor-pointer hover:text-foreground transition-colors">
+                                <span>Project Threads</span>
+                            </div>
+                            <div className="space-y-0.5">
+                                {chats.filter(c => c.type === "project").length === 0 ? (
+                                    <div className="px-3 py-1 text-[10px] text-muted-foreground/30 italic">No active projects</div>
+                                ) : (
+                                    chats.filter(c => c.type === "project").map((chat) => (
+                                        <div
+                                            key={chat.id}
+                                            onClick={() => {
+                                                setCurrentChatId(chat.id);
+                                                setMessages(chat.messages);
+                                                setProjectMode(chat.mode || "research");
+                                                setActiveTab("chat.tsx");
+                                                if (window.innerWidth < 768) setSidebarOpen(false);
+                                            }}
+                                            className={cn(
+                                                "group relative px-3 py-2 text-xs rounded-md cursor-pointer transition-all truncate flex items-center gap-2",
+                                                currentChatId === chat.id
+                                                    ? "bg-accent/10 text-accent"
+                                                    : "text-muted-foreground/80 hover:bg-white/5 hover:text-foreground"
+                                            )}
                                         >
-                                            <Plus className="w-3 h-3 group-hover:scale-110 transition-transform" />
+                                            <Layers className="w-3.5 h-3.5 opacity-70" />
+                                            <div className="truncate flex-1">{chat.title}</div>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Recent Chats Group */}
+                        <div>
+                            <div className="px-3 mb-2 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">Recents</div>
+                            <div className="space-y-0.5">
+                                {chats.filter(c => c.type === "standard").map((chat) => (
+                                    <div
+                                        key={chat.id}
+                                        onClick={() => {
+                                            setCurrentChatId(chat.id);
+                                            setMessages(chat.messages);
+                                            setProjectMode(null);
+                                            setActiveTab("chat.tsx");
+                                            if (window.innerWidth < 768) setSidebarOpen(false);
+                                        }}
+                                        className={cn(
+                                            "group relative px-3 py-2 text-xs rounded-md cursor-pointer transition-all truncate",
+                                            currentChatId === chat.id
+                                                ? "bg-accent/10 text-accent"
+                                                : "text-muted-foreground/80 hover:bg-white/5 hover:text-foreground"
+                                        )}
+                                    >
+                                        <div className="truncate pr-6">{chat.title}</div>
+                                        <button
+                                            onClick={(e) => handleDeleteChat(e, chat.id)}
+                                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:text-red-500 p-1.5 rounded transition-all"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
                                         </button>
                                     </div>
-                                    {chats.filter(c => c.type === "project" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-                                        <div className="px-3 py-2 text-[9px] text-muted-foreground/30 italic uppercase">
-                                            {searchQuery ? "No matching projects" : "No project activity"}
-                                        </div>
-                                    ) : (
-                                        chats.filter(c => c.type === "project" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
-                                            <div
-                                                key={chat.id}
-                                                onClick={() => {
-                                                    setCurrentChatId(chat.id);
-                                                    setMessages(chat.messages);
-                                                    setProjectMode(chat.mode || "research");
-                                                    setActiveTab("chat.tsx");
-                                                }}
-                                                className={cn(
-                                                    "group relative px-3 py-2 text-[11px] rounded-lg cursor-pointer transition-all truncate border",
-                                                    currentChatId === chat.id
-                                                        ? "bg-accent/5 border-accent/30 text-accent"
-                                                        : "text-muted-foreground/70 hover:text-foreground hover:bg-white/5 border-transparent hover:border-border/40"
-                                                )}
-                                            >
-                                                <div className="pr-6 truncate">{chat.title}</div>
-                                                <button
-                                                    onClick={(e) => handleDeleteChat(e, chat.id)}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-500 p-1 rounded transition-all"
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                    <button
-                                        onClick={() => handleNewChat("project")}
-                                        className="w-full flex items-center gap-2 mt-2 px-3 py-2 text-[10px] text-accent/80 hover:text-accent bg-accent/5 hover:bg-accent/10 border border-accent/20 rounded-lg transition-all"
-                                    >
-                                        <Plus className="w-3 h-3" />
-                                        <span>NEW PROJECT THREAD</span>
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* History Section */}
-                            <div className="flex-1 overflow-y-auto mt-4 px-3 scrollbar-hide">
-                                <div className="text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.2em] px-3 mb-2">Your chats</div>
-                                <div className="space-y-0.5 pb-20">
-                                    {chats.filter(c => c.type === "standard" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-                                        <div className="px-3 py-4 text-[10px] text-muted-foreground/40 italic uppercase">
-                                            {searchQuery ? "No matching chats" : "No recent activity"}
-                                        </div>
-                                    ) : (
-                                        chats.filter(c => c.type === "standard" && c.title.toLowerCase().includes(searchQuery.toLowerCase())).map((chat) => (
-                                            <div
-                                                key={chat.id}
-                                                onClick={() => {
-                                                    setCurrentChatId(chat.id);
-                                                    setMessages(chat.messages);
-                                                    setProjectMode(null);
-                                                    setActiveTab("chat.tsx");
-                                                }}
-                                                className={cn(
-                                                    "group relative px-3 py-2.5 text-xs rounded-lg cursor-pointer transition-all truncate border",
-                                                    currentChatId === chat.id
-                                                        ? "bg-accent/10 border-accent/20 text-foreground"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-white/5 border-transparent hover:border-border/40"
-                                                )}
-                                            >
-                                                <div className="pr-6 truncate">{chat.title}</div>
-                                                <button
-                                                    onClick={(e) => handleDeleteChat(e, chat.id)}
-                                                    className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:bg-red-500/20 hover:text-red-500 p-1 rounded transition-all"
-                                                >
-                                                    <Trash2 className="w-3 h-3" />
-                                                </button>
-                                            </div>
-                                        ))
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {sidebarView === "search" && (
-                        <div className="p-4 space-y-4">
-                            <div className="bg-[#050505] border border-border/40 flex items-center px-3 py-2 gap-2">
-                                <Search className="w-4 h-4 text-muted-foreground" />
-                                <input className="bg-transparent border-none outline-none text-xs w-full font-mono placeholder:text-muted-foreground/50" placeholder="Search knowledge base..." />
-                            </div>
-                            <div className="text-[10px] text-muted-foreground uppercase tracking-wider text-center pt-10">
-                                Indexing Complete. 0 Results.
-                            </div>
-                        </div>
-                    )}
-
-                    {sidebarView === "git" && (
-                        <div className="p-4">
-                            <div className="flex justify-between items-center mb-4">
-                                <span className="text-[10px] uppercase">Changes</span>
-                                <span className="text-[10px] bg-accent/20 text-accent px-1.5 rounded-full">2</span>
-                            </div>
-                            <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-xs text-yellow-500/80 px-2 py-1 hover:bg-foreground/5 cursor-pointer">
-                                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                                    app/chat/page.tsx
-                                    <span className="ml-auto text-[10px] text-muted-foreground">M</span>
-                                </div>
-                                <div className="flex items-center gap-2 text-xs text-green-500/80 px-2 py-1 hover:bg-foreground/5 cursor-pointer">
-                                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                                    hooks/use-ai.ts
-                                    <span className="ml-auto text-[10px] text-muted-foreground">U</span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {sidebarView === "settings" && (
-                        <div className="p-4 space-y-2">
-                            {["Appearance", "Model Configuration", "Voice Settings", "API Keys"].map(setting => (
-                                <div key={setting} className="px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-foreground/5 cursor-pointer transition-colors">
-                                    {setting}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    {sidebarView === "database" && (
-                        <div className="p-4 space-y-4">
-                            <div className="text-[10px] uppercase text-muted-foreground mb-2">Connected: postgres_prod</div>
-                            <div className="space-y-1">
-                                {["users", "chats", "memories", "embeddings"].map(table => (
-                                    <div key={table} className="flex items-center gap-2 text-xs text-foreground/80 cursor-pointer hover:text-accent">
-                                        <Database className="w-3 h-3 text-muted-foreground" />
-                                        {table}
-                                        <span className="ml-auto text-[9px] text-muted-foreground">14.2MB</span>
-                                    </div>
                                 ))}
+                                {chats.filter(c => c.type === "standard").length === 0 && (
+                                    <div className="px-3 py-1 text-[10px] text-muted-foreground/30 italic">No recent chats</div>
+                                )}
                             </div>
                         </div>
-                    )}
+                    </div>
 
-                    {sidebarView === "layers" && (
-                        <div className="p-4">
-                            <div className="flex flex-col gap-2">
-                                {["Presentation Layer", "Logic Grid", "Data Storage", "AI Inference"].map((layer, i) => (
-                                    <div key={layer} className="p-2 border border-border/40 rounded bg-muted/5 text-xs text-center hover:border-accent cursor-pointer transition-colors">
-                                        {layer}
-                                    </div>
-                                ))}
+                    {/* Footer / User Profile */}
+                    <div className="p-3 border-t border-border/40 mt-auto bg-[#0a0a0a]">
+                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group">
+                            <div className="w-8 h-8 rounded bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
+                                <span className="font-[var(--font-bebas)] text-lg text-accent">V</span>
                             </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-xs font-medium truncate group-hover:text-accent transition-colors">VULCARIS User</div>
+                                <div className="text-[10px] text-muted-foreground truncate">Pro Plan Active</div>
+                            </div>
+                            <Settings className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                         </div>
-                    )}
+                        <div className="mt-2 flex justify-between items-center px-1">
+                            <ProfileMenu />
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -636,7 +519,7 @@ function ChatContent() {
                                             {/* Hero Logo */}
                                             <div className="text-center space-y-2">
                                                 <h1 className="font-[var(--font-bebas)] text-6xl md:text-8xl tracking-wider text-foreground">
-                                                    NEXIS
+                                                    VULCARIS
                                                 </h1>
                                                 <p className="font-mono text-xs md:text-sm text-muted-foreground/60 tracking-[0.2em] uppercase">
                                                     Enterprise Conversational Intelligence
