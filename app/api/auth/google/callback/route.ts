@@ -9,7 +9,12 @@ export async function GET(request: Request) {
     const error = searchParams.get('error');
     const state = searchParams.get('state') || '/chat';
 
-    const rootUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Dynamic Host Detection
+    const host = request.headers.get('host');
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+
+    // Prefer env var if set (manual override), otherwise dynamic host, otherwise localhost fallback
+    const rootUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000');
 
     if (error || !code) {
         return NextResponse.redirect(new URL(`${rootUrl}/login?error=google_auth_failed`, request.url));

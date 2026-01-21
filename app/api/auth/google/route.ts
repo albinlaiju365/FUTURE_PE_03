@@ -4,7 +4,12 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const redirectUrl = searchParams.get('redirect_url') || '/chat';
 
-    const rootUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // Dynamic Host Detection
+    const host = request.headers.get('host');
+    const protocol = request.headers.get('x-forwarded-proto') || 'http';
+
+    // Prefer env var if set (manual override), otherwise dynamic host, otherwise localhost fallback
+    const rootUrl = process.env.NEXT_PUBLIC_APP_URL || (host ? `${protocol}://${host}` : 'http://localhost:3000');
 
     if (!process.env.GOOGLE_CLIENT_ID) {
         return NextResponse.json({ error: "Google Client ID not configured" }, { status: 500 });
