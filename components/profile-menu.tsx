@@ -68,8 +68,8 @@ export function ProfileMenu({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
             description: "You have been logged out of the terminal.",
         })
         setTimeout(() => {
-            router.push("/")
-        }, 800)
+            window.location.href = "/"
+        }, 300)
     }
 
     const isLoggedIn = typeof window !== "undefined" && localStorage.getItem("isLoggedIn") === "true"

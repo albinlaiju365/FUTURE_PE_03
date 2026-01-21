@@ -7,7 +7,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
-    const state = searchParams.get('state') || '/chat';
+    const state = searchParams.get('state') && searchParams.get('state') !== '/' ? searchParams.get('state')! : '/chat';
 
     // Dynamic Host Detection
     const host = request.headers.get('host');
