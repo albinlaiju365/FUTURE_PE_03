@@ -29,4 +29,17 @@ export const createMemoriesTableParams = `
     );
 `;
 
+export const createChatsTableParams = `
+    CREATE TABLE IF NOT EXISTS chats (
+        id TEXT PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        title TEXT,
+        messages JSONB,
+        type TEXT DEFAULT 'standard',
+        mode TEXT,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+`;
+
 export { sql };

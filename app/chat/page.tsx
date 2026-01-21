@@ -111,26 +111,112 @@ function ChatContent() {
     const [isHistoryLoaded, setIsHistoryLoaded] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
 
-    // Load history on mount
+    // Load history on mount (Local + Cloud)
     useEffect(() => {
-        const saved = localStorage.getItem("nexis_chat_history")
-        if (saved) {
+        const loadHistory = async () => {
+            let localChats: any[] = []
             try {
-                const parsed = JSON.parse(saved)
-                setChats(parsed)
+                const saved = localStorage.getItem("nexis_chat_history")
+                if (saved) {
+                    localChats = JSON.parse(saved)
+                }
             } catch (e) {
-                console.error("Failed to parse chat history")
+                console.error("Failed to parse local chat history")
+            }
+
+            try {
+                // Fetch Cloud Chats
+                const res = await fetch("/api/chat/sync")
+                if (res.ok) {
+                    const data = await res.json()
+                    if (data.chats && Array.isArray(data.chats)) {
+                        // Merge Strategy: specialized simple merge based on ID
+                        // Prioritize Cloud for conflict, but keep local-only chats
+                        const cloudMap = new Map(data.chats.map((c: any) => [c.id, c]))
+                        const localMap = new Map(localChats.map((c: any) => [c.id, c]))
+
+                        // Combine IDs
+                        const allIds = new Set([...cloudMap.keys(), ...localMap.keys()])
+                        const mergedChats: any[] = []
+
+                        allIds.forEach(id => {
+                            const cloud = cloudMap.get(id)
+                            const local = localMap.get(id)
+
+                            // If exists in both, use the one with later update (or cloud if timestamps missing)
+                            // For simplicity, we just take cloud if available as "truth"
+                            if (cloud) {
+                                mergedChats.push(cloud)
+                            } else if (local) {
+                                mergedChats.push(local)
+                                // It's in local but not cloud => push to cloud background
+                                fetch("/api/chat/sync", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(local)
+                                })
+                            }
+                        })
+
+                        // Sort by updated_at or default to created order (reverse of push usually)
+                        // But since we don't have explicit dates on all old local chats, we can rely on order
+                        // data.chats comes ordered from DB.
+                        setChats(data.chats.length > 0 ? data.chats : localChats)
+                    } else {
+                        // No cloud chats, but we have local? Sync up.
+                        if (localChats.length > 0) {
+                            setChats(localChats)
+                            fetch("/api/chat/sync", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify(localChats)
+                            })
+                        }
+                    }
+                } else {
+                    // Fallback to local
+                    setChats(localChats)
+                }
+            } catch (error) {
+                console.error("Cloud sync failed, using local", error)
+                setChats(localChats)
+            } finally {
+                setIsHistoryLoaded(true)
             }
         }
-        setIsHistoryLoaded(true)
+
+        loadHistory()
     }, [])
 
     // Save history whenever it changes
     useEffect(() => {
         if (isHistoryLoaded) {
+            // Local Save
             localStorage.setItem("nexis_chat_history", JSON.stringify(chats))
+
+            // Cloud Save (Debounced ideally, but here we just fire for simplicity of the prototype)
+            // We only save the *current* chat if it changed, or we can just push the whole state?
+            // Pushing whole state array is heavy. 
+            // Better: find the active chat and save it.
+            // But 'chats' array updates are what triggers this.
+
+            // Optimization: Only sync if we have a valid chat ID and content
+            // We can just sync the *entire* list for now as per the bulk endpoint we made
+            // OR finding the modified chat is better but let's be robust first.
+            if (chats.length > 0) {
+                // To avoid spamming, we could use a ref to track last save time, but for now:
+                // We will sync the recently modified chat.
+                const chatToSync = chats.find(c => c.id === currentChatId)
+                if (chatToSync) {
+                    fetch("/api/chat/sync", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(chatToSync)
+                    }).catch(err => console.error("Background sync error", err))
+                }
+            }
         }
-    }, [chats, isHistoryLoaded])
+    }, [chats, isHistoryLoaded, currentChatId])
 
     // Auto-generate title and sync history ONLY when message is finished
     useEffect(() => {
