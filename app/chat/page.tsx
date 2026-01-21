@@ -631,10 +631,90 @@ function ChatContent() {
                         {activeTab === "chat.tsx" && (
                             <>
                                 {messages.length === 0 ? (
-                                    <div className="h-full flex flex-col items-center justify-center opacity-20">
-                                        <Cpu className="w-16 h-16 mb-6" />
-                                        <p className="text-xl uppercase tracking-[0.3em]">System Standby</p>
-                                        <p className="mt-2 text-xs uppercase tracking-[0.2em]">Awaiting Instruction Input...</p>
+                                    <div className="h-full flex flex-col items-center justify-center p-4">
+                                        <div className="w-full max-w-2xl flex flex-col items-center gap-8 animate-in fade-in zoom-in-95 duration-500">
+                                            {/* Hero Logo */}
+                                            <div className="text-center space-y-2">
+                                                <h1 className="font-[var(--font-bebas)] text-6xl md:text-8xl tracking-wider text-foreground">
+                                                    NEXIS
+                                                </h1>
+                                                <p className="font-mono text-xs md:text-sm text-muted-foreground/60 tracking-[0.2em] uppercase">
+                                                    Enterprise Conversational Intelligence
+                                                </p>
+                                            </div>
+
+                                            {/* Centered Input Form */}
+                                            <div className="w-full">
+                                                <form
+                                                    onSubmit={handleSubmit}
+                                                    className="w-full flex items-end gap-2 bg-[#0d0d0d] border border-border/60 focus-within:border-accent p-3 transition-all shadow-2xl rounded-xl"
+                                                >
+                                                    <div className="flex-1 min-h-[44px] flex flex-col justify-center px-2">
+                                                        <textarea
+                                                            value={input}
+                                                            onChange={handleInputChange}
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === "Enter" && !e.shiftKey) {
+                                                                    e.preventDefault()
+                                                                    handleSubmit(e as any)
+                                                                }
+                                                            }}
+                                                            placeholder="How can I help you regarding your project?"
+                                                            className="w-full bg-transparent border-none outline-none text-sm placeholder:text-muted-foreground/40 resize-none max-h-32 py-2 scrollbar-hide text-center md:text-left"
+                                                            rows={1}
+                                                            disabled={isLoading}
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <button
+                                                            type="button"
+                                                            className="p-2 text-muted-foreground hover:text-accent transition-colors"
+                                                            title="Add File"
+                                                        >
+                                                            <Folder className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={isListening ? stopListening : startListening}
+                                                            className={cn(
+                                                                "p-2 transition-colors relative",
+                                                                isListening ? "text-destructive hover:text-destructive/80" : "text-muted-foreground hover:text-accent"
+                                                            )}
+                                                            title={isListening ? "Stop Listening" : "Voice Input"}
+                                                        >
+                                                            <Mic className={cn("w-4 h-4", isListening && "animate-pulse")} />
+                                                            {isListening && <span className="absolute top-1 right-1 flex h-2 w-2 rounded-full bg-destructive animate-ping" />}
+                                                        </button>
+                                                        <button
+                                                            type="submit"
+                                                            disabled={!input.trim() || isLoading}
+                                                            className="p-2 bg-accent text-background rounded-lg hover:bg-white transition-all disabled:opacity-30 disabled:hover:bg-accent"
+                                                        >
+                                                            {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                                                        </button>
+                                                    </div>
+                                                </form>
+
+                                                {/* Suggestions */}
+                                                <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-2 w-full">
+                                                    {[
+                                                        { icon: Terminal, label: "Generate Code" },
+                                                        { icon: Search, label: "Research Topic" },
+                                                        { icon: Image, label: "Analyze Image" },
+                                                        { icon: FileCode, label: "Refactor API" },
+                                                    ].map((item, i) => (
+                                                        <button
+                                                            key={i}
+                                                            onClick={() => setInput(prev => prev + (prev ? " " : "") + item.label)}
+                                                            className="flex flex-col items-center gap-2 p-3 rounded-lg border border-white/5 bg-white/5 hover:bg-white/10 hover:border-accent/20 transition-all group"
+                                                        >
+                                                            <item.icon className="w-4 h-4 text-muted-foreground group-hover:text-accent mb-1" />
+                                                            <span className="text-[10px] uppercase tracking-wider text-muted-foreground group-hover:text-foreground">{item.label}</span>
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="max-w-4xl mx-auto space-y-12 pb-4">
@@ -725,8 +805,8 @@ function ChatContent() {
                         )}
                     </div>
 
-                    {/* Input Bar - Standard Flow */}
-                    {activeTab === "chat.tsx" && (
+                    {/* Input Bar - Standard Flow (Only visible when messages > 0) */}
+                    {activeTab === "chat.tsx" && messages.length > 0 && (
                         <div className="p-3 md:p-6 bg-[#050505] border-t border-border/20 z-20 shrink-0 mb-safe">
                             <form
                                 onSubmit={handleSubmit}
@@ -761,6 +841,13 @@ function ChatContent() {
                                     >
                                         {isEnhancing ? <Loader2 className="w-4 h-4 animate-spin text-accent" /> : <Wand2 className="w-4 h-4" />}
                                         {isEnhancing && <span className="absolute -top-1 -right-1 flex h-2 w-2 rounded-full bg-accent animate-ping" />}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="p-3 text-muted-foreground hover:text-accent transition-colors"
+                                        title="Add File"
+                                    >
+                                        <Folder className="w-4 h-4" />
                                     </button>
                                     <button
                                         type="button"
