@@ -43,12 +43,13 @@ function ChatContent() {
     const searchParams = useSearchParams()
     const initialQuery = searchParams.get("q")
 
-    useEffect(() => {
-        const isLoggedIn = localStorage.getItem("isLoggedIn") === "true"
-        if (!isLoggedIn) {
-            router.push("/")
-        }
-    }, [router])
+    // Auth redirect managed by middleware.ts now
+    // useEffect(() => {
+    //     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true"
+    //     if (!isLoggedIn) {
+    //         router.push("/")
+    //     }
+    // }, [router])
 
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [sidebarView, setSidebarView] = useState<"explorer" | "search" | "git" | "settings" | "database" | "layers">("explorer")
