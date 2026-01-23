@@ -63,6 +63,9 @@ export function ProfileMenu({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
         localStorage.removeItem("isLoggedIn")
         localStorage.removeItem("userName")
         localStorage.removeItem("userEmail")
+        localStorage.removeItem("nexis_chat_history")
+        localStorage.removeItem("ai_memories")
+        localStorage.removeItem("nexis_persona")
 
         toast.info("Session terminated", {
             description: "You have been logged out of the terminal.",

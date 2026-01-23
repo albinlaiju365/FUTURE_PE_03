@@ -116,16 +116,22 @@ function ChatContent() {
                 const res = await fetch("/api/chat/sync")
                 if (res.ok) {
                     const data = await res.json()
+                    // CRITICAL SECURITY FIX: 
+                    // If the server returns a valid list (even empty), we MUST use it.
+                    // Falling back to localChats causes history to leak from previous users.
                     if (data.chats && Array.isArray(data.chats)) {
-                        setChats(data.chats.length > 0 ? data.chats : localChats)
+                        setChats(data.chats)
                     } else {
-                        setChats(localChats)
+                        setChats([]) // Fallback to empty if data is weird
                     }
                 } else {
-                    setChats(localChats)
+                    // If unauthorized or server error, we show nothing for security
+                    setChats([])
+                    localStorage.removeItem("nexis_chat_history")
                 }
             } catch (error) {
-                setChats(localChats)
+                console.error("Sync fetch failed", error)
+                setChats([])
             } finally {
                 setIsHistoryLoaded(true)
             }

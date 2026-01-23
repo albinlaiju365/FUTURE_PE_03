@@ -28,6 +28,10 @@ const nextConfig = {
                     {
                         key: 'Permissions-Policy',
                         value: 'camera=(), microphone=(self), geolocation=()'
+                    },
+                    {
+                        key: 'Content-Security-Policy',
+                        value: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' blob: data: https://api.dicebear.com https://images.unsplash.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://vitals.vercel-insights.com https://accounts.google.com https://oauth2.googleapis.com https://www.googleapis.com https://api.elevenlabs.io wss://api.elevenlabs.io; frame-src 'self' https://accounts.google.com;"
                     }
                 ]
             }

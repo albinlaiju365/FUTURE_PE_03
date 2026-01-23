@@ -30,10 +30,18 @@ export default function Page() {
           localStorage.setItem("userEmail", data.user.email)
 
           // Auto-redirect to chat if valid session exists
-          window.location.href = "/chat"
+          if (window.location.pathname === "/") {
+            window.location.href = "/chat"
+          }
         } else {
           setIsLoggedIn(false)
+          // SECURITY PURGE: Clear sensitive data if session is invalid
           localStorage.removeItem("isLoggedIn")
+          localStorage.removeItem("userName")
+          localStorage.removeItem("userEmail")
+          localStorage.removeItem("nexis_chat_history")
+          localStorage.removeItem("ai_memories")
+          localStorage.removeItem("nexis_persona")
         }
       } catch (e) {
         setIsLoggedIn(false)
@@ -43,17 +51,6 @@ export default function Page() {
     checkAuth()
     // Listen for storage changes (for across tabs updates still useful)
     window.addEventListener('storage', checkAuth)
-
-    // Legacy Data Purge (One-time cleanup)
-    if (localStorage.getItem("registeredUsers")) {
-      console.log("System Reset: Purging legacy data protocols...")
-      localStorage.removeItem("registeredUsers") // Old mock DB
-      localStorage.removeItem("isLoggedIn")      // Old session flag
-      localStorage.removeItem("userName")
-      localStorage.removeItem("userEmail")
-      // localStorage.removeItem("nexis_chat_history") // Uncomment if we want to wipe chats too. Currently keeping history as user might value it.
-      // If user wants full nuke, they can clear browser data.
-    }
 
     return () => window.removeEventListener('storage', checkAuth)
   }, [])
