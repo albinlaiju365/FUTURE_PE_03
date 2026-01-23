@@ -72,3 +72,29 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Failed to sync chats" }, { status: 500 });
     }
 }
+export async function DELETE(req: Request) {
+    const user = await getCurrentUser();
+    if (!user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    try {
+        const { searchParams } = new URL(req.url);
+        const chatId = searchParams.get('id');
+
+        if (!chatId) {
+            return NextResponse.json({ error: "Chat ID required" }, { status: 400 });
+        }
+
+        await ensureTable();
+        await sql`
+            DELETE FROM chats 
+            WHERE id = ${chatId} AND user_id = ${user.id}
+        `;
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error("Delete Chat Error:", error);
+        return NextResponse.json({ error: "Failed to delete chat" }, { status: 500 });
+    }
+}

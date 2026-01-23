@@ -134,10 +134,10 @@ function ChatContent() {
     }, [])
 
     useEffect(() => {
-        if (isHistoryLoaded && chats.length > 0) {
+        if (isHistoryLoaded) {
             localStorage.setItem("nexis_chat_history", JSON.stringify(chats))
             const chatToSync = chats.find(c => c.id === currentChatId)
-            if (chatToSync) {
+            if (chatToSync && chatToSync.messages.length > 0) {
                 fetch("/api/chat/sync", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -187,11 +187,30 @@ function ChatContent() {
         else if (!projectMode) setProjectMode("research");
     };
 
-    const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
+    const handleDeleteChat = async (e: React.MouseEvent, chatId: string) => {
         e.stopPropagation();
-        setChats(prev => prev.filter(c => c.id !== chatId));
+
+        // Optimistic UI update
+        const updatedChats = chats.filter(c => c.id !== chatId);
+        setChats(updatedChats);
+        localStorage.setItem("nexis_chat_history", JSON.stringify(updatedChats));
+
         if (currentChatId === chatId) handleNewChat("standard");
-        toast.success("Chat deleted");
+
+        try {
+            const res = await fetch(`/api/chat/sync?id=${chatId}`, {
+                method: "DELETE"
+            });
+            if (res.ok) {
+                toast.success("Chat deleted");
+            } else {
+                console.error("Failed to delete chat from server");
+                // Optionally restore state if delete fails significantly, 
+                // but usually user expects it to be gone locally at least.
+            }
+        } catch (error) {
+            console.error("Error deleting chat:", error);
+        }
     };
 
     useEffect(() => {
