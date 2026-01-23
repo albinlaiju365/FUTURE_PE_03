@@ -1,12 +1,12 @@
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
+import { Quicksand } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "sonner"
 import type React from "react"
-import { PWAInstallPrompt } from "@/components/pwa-install-prompt"
+
 import type { Metadata, Viewport } from "next"
 
-const inter = Inter({ subsets: ["latin"] })
+const quicksand = Quicksand({ subsets: ["latin"], weight: ["300", "400", "500", "600", "700"], variable: "--font-quicksand" })
 
 import { SecurityShield } from "@/components/security-shield"
 
@@ -27,12 +27,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${quicksand.variable} font-sans`}>
         <ThemeProvider attribute="class" defaultTheme="dark">
           <SecurityShield>
             {children}
           </SecurityShield>
-          <PWAInstallPrompt />
+
           <Toaster position="top-right" theme="dark" closeButton richColors />
         </ThemeProvider>
       </body>

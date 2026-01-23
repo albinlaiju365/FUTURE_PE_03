@@ -87,55 +87,52 @@ export function ProfileMenu({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
-                        onClick={() => !isLoggedIn && onAuthClick?.("login")}
-                        className="relative h-10 w-10 rounded-full border border-white/10 hover:border-accent/50 transition-colors focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2 overflow-hidden"
+                        className="w-full flex items-center gap-3 p-2 rounded-xl hover:bg-secondary cursor-pointer transition-all group outline-none"
                     >
-                        <Avatar className="h-full w-full">
-                            <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${userName}`} alt={userName} />
-                            <AvatarFallback>{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
+                        <div className="w-8 h-8 rounded-full border border-border/20 overflow-hidden bg-primary/10">
+                            <Avatar className="h-full w-full">
+                                <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${userName}`} alt={userName} />
+                                <AvatarFallback className="bg-primary text-primary-foreground text-[10px]">{userName.substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                            <div className="text-sm font-medium truncate group-hover:text-primary transition-colors text-foreground">{userName}</div>
+                            <div className="text-[10px] text-muted-foreground truncate font-medium uppercase tracking-[0.05em] opacity-60">Settings & Mission</div>
+                        </div>
+                        <Settings className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                     </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 bg-black/90 border-white/10 backdrop-blur-xl" align="end" forceMount>
-                    <DropdownMenuLabel className="font-normal">
+                <DropdownMenuContent className="w-64 bg-popover/90 border-border/20 backdrop-blur-xl rounded-[18px] shadow-2xl p-1.5" align="start" side="top" forceMount>
+                    <DropdownMenuLabel className="font-normal px-3 py-3">
                         <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none text-white">{userName}</p>
-                            <p className="text-[10px] font-mono leading-none text-muted-foreground uppercase tracking-widest truncate">
+                            <p className="text-sm font-semibold leading-none text-foreground">{userName}</p>
+                            <p className="text-[11px] leading-none text-muted-foreground truncate">
                                 {userEmail}
                             </p>
                         </div>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="bg-white/5" />
+                    <DropdownMenuSeparator className="bg-border/10 my-1" />
                     <DropdownMenuGroup>
-                        <DropdownMenuItem onClick={() => openSettings("profile")} className="text-white/70 hover:text-white hover:bg-white/5 cursor-pointer py-2.5 transition-all">
-                            <User className="mr-2 h-4 w-4" />
-                            <span className="text-[10px] uppercase tracking-widest font-mono">Profile</span>
-                            <DropdownMenuShortcut className="text-[10px] opacity-30">⇧⌘P</DropdownMenuShortcut>
+                        <DropdownMenuItem onClick={() => openSettings("profile")} className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-secondary cursor-pointer transition-all">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>Profile Settings</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openSettings("bot")} className="text-white/70 hover:text-white hover:bg-white/5 cursor-pointer py-2.5 transition-all">
-                            <Monitor className="mr-2 h-4 w-4" />
-                            <span className="text-[10px] uppercase tracking-widest font-mono">Bot Customization</span>
-                            <DropdownMenuShortcut className="text-[10px] opacity-30">⌘B</DropdownMenuShortcut>
+                        <DropdownMenuItem onClick={() => openSettings("bot")} className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-secondary cursor-pointer transition-all">
+                            <Monitor className="h-4 w-4 text-muted-foreground" />
+                            <span>Customize Assistant</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openSettings("notifications")} className="text-white/70 hover:text-white hover:bg-white/5 cursor-pointer py-2.5 transition-all">
-                            <Bell className="mr-2 h-4 w-4" />
-                            <span className="text-[10px] uppercase tracking-widest font-mono">Notifications</span>
-                            <span className="ml-auto flex h-2 w-2 shrink-0 rounded-full bg-accent animate-pulse"></span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => openSettings("system")} className="text-white/70 hover:text-white hover:bg-white/5 cursor-pointer py-2.5 transition-all">
-                            <Settings className="mr-2 h-4 w-4" />
-                            <span className="text-[10px] uppercase tracking-widest font-mono">System Settings</span>
-                            <DropdownMenuShortcut className="text-[10px] opacity-30">⌘S</DropdownMenuShortcut>
+                        <DropdownMenuItem onClick={() => openSettings("notifications")} className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl hover:bg-secondary cursor-pointer transition-all">
+                            <Bell className="h-4 w-4 text-muted-foreground" />
+                            <span>Notifications</span>
                         </DropdownMenuItem>
                     </DropdownMenuGroup>
-                    <DropdownMenuSeparator className="bg-white/5" />
+                    <DropdownMenuSeparator className="bg-border/10 my-1" />
                     <DropdownMenuItem
                         onClick={handleLogout}
-                        className="text-accent hover:text-accent hover:bg-accent/10 cursor-pointer py-3 transition-all"
+                        className="flex items-center gap-2.5 px-3 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 rounded-xl cursor-pointer transition-all"
                     >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span className="text-[10px] uppercase tracking-widest font-mono font-bold">Terminate Session</span>
-                        <DropdownMenuShortcut className="text-[10px] opacity-30">⇧⌘Q</DropdownMenuShortcut>
+                        <LogOut className="h-4 w-4" />
+                        <span>Sign Out</span>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

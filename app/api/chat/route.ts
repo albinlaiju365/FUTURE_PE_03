@@ -5,13 +5,13 @@ import { MemoryManager } from '@/lib/agents/memory-manager';
 import { PlannerAgent } from '@/lib/agents/planner';
 import { CriticAgent } from '@/lib/agents/critic';
 
-const groq = createGroq({
-    apiKey: process.env.GROQ_API_KEY,
-});
 
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+    const groq = createGroq({
+        apiKey: process.env.GROQ_API_KEY,
+    });
     try {
         // 1. AUTHENTICATION LAYER
         const user: any = await getCurrentUser();

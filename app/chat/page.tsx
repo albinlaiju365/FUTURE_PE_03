@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, Suspense } from "react"
 import { useChat } from "@ai-sdk/react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
     Terminal,
     FileCode,
@@ -27,7 +28,10 @@ import {
     Image,
     Grid2X2,
     Folder,
-    Trash2
+    Trash2,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Headphones
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
@@ -35,43 +39,41 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { toast } from "sonner"
 import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
 import { AnimatedBackground } from "@/components/animated-background"
-
+import { SettingsModal } from "@/components/settings-modal"
 import { HackerText } from "@/components/hacker-text"
 import { ProfileMenu } from "@/components/profile-menu"
+import { Conversation } from "@/components/conversation"
 
 function ChatContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
     const initialQuery = searchParams.get("q")
 
-    // Auth redirect managed by middleware.ts now
-    // useEffect(() => {
-    //     const isLoggedIn = localStorage.getItem("isLoggedIn") === "true"
-    //     if (!isLoggedIn) {
-    //         router.push("/")
-    //     }
-    // }, [router])
-
     const [sidebarOpen, setSidebarOpen] = useState(true)
     const [sidebarView, setSidebarView] = useState<"explorer" | "search" | "git" | "settings" | "database" | "layers">("explorer")
     const [activeTab, setActiveTab] = useState("chat.tsx")
     const [isEnhancing, setIsEnhancing] = useState(false)
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+    const searchInputRef = useRef<HTMLInputElement>(null)
     const [projectMode, setProjectMode] = useState<"research" | "web" | null>(null)
     const [persona, setPersona] = useState("nexis")
+    const [userName, setUserName] = useState("User")
+    const [voiceMode, setVoiceMode] = useState(false)
 
     // Load memories for context
     const [memories, setMemories] = useState<string[]>([])
     useEffect(() => {
         const saved = localStorage.getItem("ai_memories")
         if (saved) setMemories(JSON.parse(saved))
-
         const savedPersona = localStorage.getItem("nexis_persona")
         if (savedPersona) setPersona(savedPersona)
-
-        // Listen for storage events (Settings changes)
+        const savedName = localStorage.getItem("userName")
+        if (savedName) setUserName(savedName)
         const handleStorage = () => {
             const newPersona = localStorage.getItem("nexis_persona")
             if (newPersona) setPersona(newPersona)
+            const newName = localStorage.getItem("userName")
+            if (newName) setUserName(newName)
         }
         window.addEventListener("storage", handleStorage)
         return () => window.removeEventListener("storage", handleStorage)
@@ -80,153 +82,75 @@ function ChatContent() {
     const chatConfig = useMemo(() => ({
         body: { projectMode, memories, persona },
         onFinish: (message: any) => {
-            // Parse [MEMORY: ...] tags
             const content = message.content;
             const memoryMatch = content.match(/\[MEMORY: (.*?)\]/);
-
             if (memoryMatch && memoryMatch[1]) {
                 const fact = memoryMatch[1];
                 const currentMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]");
-
                 if (!currentMemories.includes(fact)) {
                     const updated = [...currentMemories, fact];
                     localStorage.setItem("ai_memories", JSON.stringify(updated));
                     setMemories(updated);
-                    // toast.custom((t) => (
-                    //     <div className="bg-accent/10 border border-accent/20 text-accent px-4 py-2 rounded-full text-xs font-mono flex items-center gap-2">
-                    //         <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                    //         Memory Core Updated: "{fact}"
-                    //     </div>
-                    // ), { duration: 3000 });
                 }
             }
         }
-    }), [projectMode, memories])
+    }), [projectMode, memories, persona])
 
     const { messages, input, handleInputChange, handleSubmit, isLoading, append, setInput, setMessages } = useChat(chatConfig) as any
     const scrollRef = useRef<HTMLDivElement>(null)
     const hasTriggeredInit = useRef(false)
 
-    // Dynamic History State
     const [chats, setChats] = useState<{ id: string; title: string; messages: any[]; type: "standard" | "project"; mode?: "research" | "web" }[]>([])
     const [currentChatId, setCurrentChatId] = useState(Date.now().toString())
     const [isHistoryLoaded, setIsHistoryLoaded] = useState(false)
-    const [searchQuery, setSearchQuery] = useState("")
 
-    // Load history on mount (Local + Cloud)
     useEffect(() => {
         const loadHistory = async () => {
             let localChats: any[] = []
             try {
                 const saved = localStorage.getItem("nexis_chat_history")
-                if (saved) {
-                    localChats = JSON.parse(saved)
-                }
-            } catch (e) {
-                console.error("Failed to parse local chat history")
-            }
+                if (saved) localChats = JSON.parse(saved)
+            } catch (e) { console.error("History parse failure") }
 
             try {
-                // Fetch Cloud Chats
                 const res = await fetch("/api/chat/sync")
                 if (res.ok) {
                     const data = await res.json()
                     if (data.chats && Array.isArray(data.chats)) {
-                        // Merge Strategy: specialized simple merge based on ID
-                        // Prioritize Cloud for conflict, but keep local-only chats
-                        const cloudMap = new Map(data.chats.map((c: any) => [c.id, c]))
-                        const localMap = new Map(localChats.map((c: any) => [c.id, c]))
-
-                        // Combine IDs
-                        const allIds = new Set([...cloudMap.keys(), ...localMap.keys()])
-                        const mergedChats: any[] = []
-
-                        allIds.forEach(id => {
-                            const cloud = cloudMap.get(id)
-                            const local = localMap.get(id)
-
-                            // If exists in both, use the one with later update (or cloud if timestamps missing)
-                            // For simplicity, we just take cloud if available as "truth"
-                            if (cloud) {
-                                mergedChats.push(cloud)
-                            } else if (local) {
-                                mergedChats.push(local)
-                                // It's in local but not cloud => push to cloud background
-                                fetch("/api/chat/sync", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify(local)
-                                })
-                            }
-                        })
-
-                        // Sort by updated_at or default to created order (reverse of push usually)
-                        // But since we don't have explicit dates on all old local chats, we can rely on order
-                        // data.chats comes ordered from DB.
                         setChats(data.chats.length > 0 ? data.chats : localChats)
                     } else {
-                        // No cloud chats, but we have local? Sync up.
-                        if (localChats.length > 0) {
-                            setChats(localChats)
-                            fetch("/api/chat/sync", {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify(localChats)
-                            })
-                        }
+                        setChats(localChats)
                     }
                 } else {
-                    // Fallback to local
                     setChats(localChats)
                 }
             } catch (error) {
-                console.error("Cloud sync failed, using local", error)
                 setChats(localChats)
             } finally {
                 setIsHistoryLoaded(true)
             }
         }
-
         loadHistory()
     }, [])
 
-    // Save history whenever it changes
     useEffect(() => {
-        if (isHistoryLoaded) {
-            // Local Save
+        if (isHistoryLoaded && chats.length > 0) {
             localStorage.setItem("nexis_chat_history", JSON.stringify(chats))
-
-            // Cloud Save (Debounced ideally, but here we just fire for simplicity of the prototype)
-            // We only save the *current* chat if it changed, or we can just push the whole state?
-            // Pushing whole state array is heavy. 
-            // Better: find the active chat and save it.
-            // But 'chats' array updates are what triggers this.
-
-            // Optimization: Only sync if we have a valid chat ID and content
-            // We can just sync the *entire* list for now as per the bulk endpoint we made
-            // OR finding the modified chat is better but let's be robust first.
-            if (chats.length > 0) {
-                // To avoid spamming, we could use a ref to track last save time, but for now:
-                // We will sync the recently modified chat.
-                const chatToSync = chats.find(c => c.id === currentChatId)
-                if (chatToSync) {
-                    fetch("/api/chat/sync", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(chatToSync)
-                    }).catch(err => console.error("Background sync error", err))
-                }
+            const chatToSync = chats.find(c => c.id === currentChatId)
+            if (chatToSync) {
+                fetch("/api/chat/sync", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(chatToSync)
+                }).catch(err => console.error("Sync error", err))
             }
         }
     }, [chats, isHistoryLoaded, currentChatId])
 
-    // Auto-generate title and sync history ONLY when message is finished
     useEffect(() => {
         if (messages.length > 0 && !isLoading) {
             setChats(prev => {
                 const existingIndex = prev.findIndex(c => c.id === currentChatId);
-
-                // If this is a new thread, generate the title
                 if (existingIndex === -1) {
                     const firstUserMessage = messages.find((m: any) => m.role === 'user');
                     if (firstUserMessage) {
@@ -241,8 +165,6 @@ function ChatContent() {
                     }
                     return prev;
                 } else {
-                    // Update messages in existing chat ONLY if they actually changed
-                    // This prevents re-renders when navigating history
                     const currentChat = prev[existingIndex];
                     if (currentChat.messages.length !== messages.length ||
                         currentChat.messages[currentChat.messages.length - 1]?.content !== messages[messages.length - 1]?.content) {
@@ -257,42 +179,21 @@ function ChatContent() {
     }, [messages, currentChatId, projectMode, isLoading]);
 
     const handleNewChat = (type: "standard" | "project" = "standard") => {
-        const isProject = type === "project" || (type === "standard" && projectMode);
-        const greeting = isProject
-            ? "EUREKA! 🛠️ The laboratory is ready. What revolutionary project shall we architect today? ⚙️"
-            : "Yo! NEXIS is online. 🚀 Ready to crush some code? What's on your mind today? ✨";
-
-        setMessages([
-            { id: Date.now().toString(), role: "assistant", content: greeting }
-        ]);
+        setMessages([]);
         setInput("");
         const newId = Date.now().toString();
         setCurrentChatId(newId);
-        setActiveTab("chat.tsx");
-
-        if (type === "standard") {
-            setProjectMode(null);
-        } else if (!projectMode) {
-            setProjectMode("research");
-        }
+        if (type === "standard") setProjectMode(null);
+        else if (!projectMode) setProjectMode("research");
     };
 
     const handleDeleteChat = (e: React.MouseEvent, chatId: string) => {
         e.stopPropagation();
         setChats(prev => prev.filter(c => c.id !== chatId));
-
-        if (currentChatId === chatId) {
-            handleNewChat("standard");
-        }
-
-        toast.promise(Promise.resolve(), {
-            loading: 'Deleting...',
-            success: 'Chat deleted',
-            error: 'Failed to delete'
-        });
+        if (currentChatId === chatId) handleNewChat("standard");
+        toast.success("Chat deleted");
     };
 
-    // Initial greeting on load
     useEffect(() => {
         if (messages.length === 0 && !hasTriggeredInit.current && !initialQuery) {
             handleNewChat("standard");
@@ -308,27 +209,6 @@ function ChatContent() {
         }
     }, [transcript, setInput, setSpeechTranscript])
 
-    const handleEnhance = async () => {
-        if (!input.trim() || isEnhancing) return
-        setIsEnhancing(true)
-        try {
-            const res = await fetch("/api/enhance", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt: input }),
-            })
-            const data = await res.json()
-            if (data.enhanced) {
-                setInput(data.enhanced)
-            }
-        } catch (err) {
-            console.error("Enhance failed:", err)
-        } finally {
-            setIsEnhancing(false)
-        }
-    }
-
-
     useEffect(() => {
         if (initialQuery && !hasTriggeredInit.current) {
             append({ role: "user", content: initialQuery })
@@ -336,338 +216,143 @@ function ChatContent() {
         }
     }, [initialQuery, append])
 
-
     useEffect(() => {
         if (scrollRef.current) {
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight
         }
     }, [messages])
 
-    // If we have an initial query from the URL, trigger the first chat automatically?
-    // Actually initialMessages handles it if we pass it, but useChat might not trigger the API call immediately.
-    // For now let's just let it show the initial message.
-
     return (
-        <div className="flex h-screen bg-[#050505] text-foreground font-mono selection:bg-accent selection:text-background overflow-hidden">
-            {/* Unified Sidebar (ChatGPT Style) */}
-            {sidebarOpen && (
-                <div className="fixed inset-y-0 left-0 z-30 w-[260px] border-r border-border/40 bg-[#080808] flex flex-col data-[state=open]:animate-in data-[state=closed]:animate-out slide-in-from-left duration-300 shadow-2xl md:relative md:shadow-none">
-                    {/* Mobile Header */}
-                    <div className="md:hidden px-4 py-3 border-b border-border/40 flex justify-between items-center bg-[#0d0d0d]">
-                        <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Menu</span>
-                        <div onClick={() => setSidebarOpen(false)} className="cursor-pointer hover:text-accent transition-colors">
-                            <X className="w-4 h-4 text-muted-foreground" />
+        <div className="flex h-screen bg-transparent text-foreground font-sans selection:bg-primary/30 selection:text-foreground overflow-hidden relative">
+            <AnimatedBackground className="pointer-events-none" />
+
+            <AnimatePresence mode="wait">
+                {voiceMode ? (
+                    <motion.div
+                        key="voice-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.6 }}
+                        className="fixed inset-0 z-[100] flex items-center justify-center overflow-hidden"
+                    >
+                        <AnimatedBackground className="opacity-100" />
+                        <div className="absolute inset-0 bg-background/40 backdrop-blur-3xl" />
+                        <div className="relative z-10 w-full">
+                            <Conversation onClose={() => setVoiceMode(false)} />
                         </div>
-                    </div>
-
-                    {/* New Chat & Actions */}
-                    <div className="p-3">
-                        <button
-                            onClick={() => handleNewChat("standard")}
-                            className="w-full flex items-center gap-3 px-3 py-3 text-sm text-foreground hover:bg-white/5 rounded-lg transition-all border border-border/20 hover:border-accent/40 bg-[#0a0a0a] group"
-                        >
-                            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center group-hover:bg-accent/20 transition-colors">
-                                <Plus className="w-4 h-4 text-accent" />
-                            </div>
-                            <span className="font-medium">New chat</span>
-                            <SquarePen className="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </button>
-                    </div>
-
-                    {/* Scrollable Chat History */}
-                    <div className="flex-1 overflow-y-auto px-3 py-2 scrollbar-hide space-y-4">
-                        {/* Project Threads Group */}
-                        <div>
-                            <div className="px-3 mb-2 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest flex items-center justify-between group cursor-pointer hover:text-foreground transition-colors">
-                                <span>Project Threads</span>
-                            </div>
-                            <div className="space-y-0.5">
-                                {chats.filter(c => c.type === "project").length === 0 ? (
-                                    <div className="px-3 py-1 text-[10px] text-muted-foreground/30 italic">No active projects</div>
-                                ) : (
-                                    chats.filter(c => c.type === "project").map((chat) => (
-                                        <div
-                                            key={chat.id}
-                                            onClick={() => {
-                                                setCurrentChatId(chat.id);
-                                                setMessages(chat.messages);
-                                                setProjectMode(chat.mode || "research");
-                                                setActiveTab("chat.tsx");
-                                                if (window.innerWidth < 768) setSidebarOpen(false);
-                                            }}
-                                            className={cn(
-                                                "group relative px-3 py-2 text-xs rounded-md cursor-pointer transition-all truncate flex items-center gap-2",
-                                                currentChatId === chat.id
-                                                    ? "bg-accent/10 text-accent"
-                                                    : "text-muted-foreground/80 hover:bg-white/5 hover:text-foreground"
-                                            )}
-                                        >
-                                            <Layers className="w-3.5 h-3.5 opacity-70" />
-                                            <div className="truncate flex-1">{chat.title}</div>
-                                        </div>
-                                    ))
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Recent Chats Group */}
-                        <div>
-                            <div className="px-3 mb-2 text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest">Recents</div>
-                            <div className="space-y-0.5">
-                                {chats.filter(c => c.type === "standard").map((chat) => (
-                                    <div
-                                        key={chat.id}
-                                        onClick={() => {
-                                            setCurrentChatId(chat.id);
-                                            setMessages(chat.messages);
-                                            setProjectMode(null);
-                                            setActiveTab("chat.tsx");
-                                            if (window.innerWidth < 768) setSidebarOpen(false);
-                                        }}
-                                        className={cn(
-                                            "group relative px-3 py-2 text-xs rounded-md cursor-pointer transition-all truncate",
-                                            currentChatId === chat.id
-                                                ? "bg-accent/10 text-accent"
-                                                : "text-muted-foreground/80 hover:bg-white/5 hover:text-foreground"
-                                        )}
-                                    >
-                                        <div className="truncate pr-6">{chat.title}</div>
-                                        <button
-                                            onClick={(e) => handleDeleteChat(e, chat.id)}
-                                            className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:text-red-500 p-1.5 rounded transition-all"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="chat-layout"
+                        initial={{ opacity: 0, scale: 1.02 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.98 }}
+                        transition={{ duration: 0.3 }}
+                        className="flex w-full h-full"
+                    >
+                        {/* Sidebar */}
+                        <div className={cn(
+                            "fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border/40 bg-sidebar/70 backdrop-blur-xl transition-all duration-300 shadow-sm md:relative md:shadow-none",
+                            sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
+                            sidebarOpen ? "w-[260px]" : "w-[0px] opacity-0 overflow-hidden"
+                        )}>
+                            {sidebarOpen && (
+                                <>
+                                    <div className="px-5 pt-6 pb-2 flex items-center justify-between">
+                                        <h1 className="text-lg font-bold tracking-tight text-foreground/90">VULCARIS</h1>
+                                        <button onClick={() => setSidebarOpen(false)} className="text-muted-foreground hover:text-foreground p-1.5 hover:bg-secondary rounded-full">
+                                            <PanelLeftClose className="w-4 h-4" />
                                         </button>
                                     </div>
-                                ))}
-                                {chats.filter(c => c.type === "standard").length === 0 && (
-                                    <div className="px-3 py-1 text-[10px] text-muted-foreground/30 italic">No recent chats</div>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Footer / User Profile */}
-                    <div className="p-3 border-t border-border/40 mt-auto bg-[#0a0a0a]">
-                        <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors group">
-                            <div className="w-8 h-8 rounded bg-gradient-to-br from-accent/20 to-accent/5 border border-accent/20 flex items-center justify-center">
-                                <span className="font-[var(--font-bebas)] text-lg text-accent">V</span>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-xs font-medium truncate group-hover:text-accent transition-colors">VULCARIS User</div>
-                                <div className="text-[10px] text-muted-foreground truncate">Pro Plan Active</div>
-                            </div>
-                            <Settings className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                        </div>
-                        <div className="mt-2 flex justify-between items-center px-1">
-                            <ProfileMenu />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 bg-[#050505] relative">
-                <AnimatedBackground className="z-0 opacity-40" />
-                {/* Header Tabs */}
-                <div className="h-10 border-b border-border/40 bg-[#0d0d0d] flex items-center px-2 z-10 gap-2">
-                    <button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="md:hidden p-1 text-muted-foreground hover:text-foreground"
-                    >
-                        <Menu className="w-4 h-4" />
-                    </button>
-
-                    <div className="flex items-center gap-px h-full overflow-hidden">
-                        <div className="flex items-center gap-px h-full overflow-x-auto scrollbar-hide">
-                            {["chat.tsx"].map((tab) => (
-                                <div
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className={cn(
-                                        "h-full px-4 flex items-center gap-2 text-[10px] uppercase tracking-wider cursor-pointer border-t-2 transition-all flex-shrink-0",
-                                        activeTab === tab
-                                            ? "bg-[#050505] border-accent text-accent"
-                                            : "bg-transparent border-transparent text-muted-foreground hover:bg-foreground/5"
-                                    )}
-                                >
-                                    <span className="opacity-50">
-                                        <Code2 className="w-3 h-3" />
-                                    </span>
-                                    {tab}
-                                    {activeTab === tab && <X className="w-3 h-3 ml-2 hover:bg-foreground/10" />}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-
-                {/* Unified Chat Rendering Area */}
-                <div className="flex-1 flex flex-col relative overflow-hidden">
-                    {/* Messages Scroll Area */}
-                    <div
-                        ref={scrollRef}
-                        className={cn(
-                            "flex-1 overflow-y-auto p-4 md:p-12 space-y-8 scrollbar-hide transition-all duration-500",
-                            messages.length === 0 ? "opacity-0 translate-y-4 pointer-events-none" : "opacity-100 translate-y-0"
-                        )}
-                    >
-                        {messages.length > 0 && (
-                            <div className="pb-32 max-w-3xl mx-auto space-y-8">
-                                {messages.map((m: any, index: number) => {
-                                    const isLastMessage = index === messages.length - 1
-                                    const isAi = m.role !== "user"
-
-                                    return (
-                                        <div key={m.id} className="group relative animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                            {/* Data Plate Container */}
-                                            <div className={cn(
-                                                "relative overflow-hidden p-6 rounded-lg transition-all duration-500",
-                                                "border border-white/5",
-                                                isAi ? "bg-[#0a0a0a]/80" : "bg-accent/5",
-                                                isAi && isLastMessage && isLoading ? "shadow-[0_0_30px_-5px_var(--color-accent)]/20 border-accent/30" : "hover:border-white/10"
-                                            )}>
-                                                {/* Scanline / Grid effect overlay */}
-                                                <div className="absolute inset-0 bg-[linear-gradient(rgba(18,18,18,0)_50%,rgba(0,0,0,0.2)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] z-0 opacity-20 pointer-events-none bg-[length:100%_4px,3px_100%]" />
-
-                                                {/* Decorative corner markers */}
-                                                {isAi && (
-                                                    <>
-                                                        <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-accent/50" />
-                                                        <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-accent/50" />
-                                                        <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-accent/50" />
-                                                        <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-accent/50" />
-                                                    </>
-                                                )}
-
-                                                <div className="relative z-10 flex items-start gap-6">
-                                                    <div className={cn(
-                                                        "w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-sm border",
-                                                        m.role === "user" ? "border-muted-foreground/30 bg-muted/5" : "border-accent/40 bg-accent/5 text-accent shadow-[0_0_10px_-2px_var(--color-accent)]/30"
-                                                    )}>
-                                                        {m.role === "user" ? <Command className="w-5 h-5" /> : <Cpu className="w-5 h-5" />}
+                                    <div className="px-3 py-2">
+                                        <button onClick={() => handleNewChat("standard")} className="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground bg-secondary hover:bg-sidebar-accent border border-border/20 rounded-xl transition-all group">
+                                            <Plus className="w-4 h-4 text-primary" />
+                                            <span>New Chat</span>
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto px-2 py-2 space-y-4">
+                                        <div>
+                                            <div className="px-4 mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Projects</div>
+                                            <div className="space-y-0.5">
+                                                {chats.filter(c => c.type === "project").map(chat => (
+                                                    <div key={chat.id} onClick={() => { setCurrentChatId(chat.id); setMessages(chat.messages); }} className={cn("px-4 py-2 text-sm rounded-xl cursor-pointer transition-all truncate flex items-center gap-3", currentChatId === chat.id ? "bg-secondary text-primary font-medium" : "text-foreground/70 hover:bg-secondary/50")}>
+                                                        <Layers className="w-4 h-4 opacity-70" />
+                                                        <span className="truncate">{chat.title}</span>
                                                     </div>
-                                                    <div className="flex-1 space-y-2">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className={cn(
-                                                                "text-[10px] uppercase tracking-widest font-bold font-mono",
-                                                                m.role === "user" ? "text-muted-foreground" : "text-accent"
-                                                            )}>
-                                                                {m.role === "user" ? "USER_PROMPT" : (projectMode ? "INVENTOR_RESPONSE" : "NEXIS_RESPONSE")}
-                                                            </span>
-                                                            <span className="text-[9px] text-muted-foreground/40 font-mono">{new Date().toLocaleTimeString()}</span>
-                                                        </div>
-
-                                                        <div className={cn(
-                                                            "text-sm leading-relaxed whitespace-pre-wrap font-sans mix-blend-screen",
-                                                            m.role === "user" ? "text-foreground/80" : "text-foreground"
-                                                        )}>
-                                                            {isAi && isLastMessage && isLoading ? (
-                                                                <span className="font-mono text-accent/90 filters drop-shadow-[0_0_5px_rgba(var(--color-accent),0.5)]">
-                                                                    {m.content.replace(/\[MEMORY: .*?\]/g, "")}
-                                                                    <span className="animate-pulse inline-block w-2 h-4 bg-accent align-middle ml-1" />
-                                                                </span>
-                                                            ) : (
-                                                                m.content.replace(/\[MEMORY: .*?\]/g, "")
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                ))}
                                             </div>
                                         </div>
-                                    )
-                                })}
-                            </div>
-                        )}
-                    </div>
+                                        <div>
+                                            <div className="px-4 mb-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">Recent</div>
+                                            <div className="space-y-0.5">
+                                                {chats.filter(c => c.type === "standard").map(chat => (
+                                                    <div key={chat.id} onClick={() => { setCurrentChatId(chat.id); setMessages(chat.messages); }} className={cn("group relative px-4 py-2 text-sm rounded-xl cursor-pointer transition-all truncate", currentChatId === chat.id ? "bg-secondary text-primary font-medium" : "text-foreground/70 hover:bg-secondary/50")}>
+                                                        <div className="truncate pr-6">{chat.title}</div>
+                                                        <button onClick={(e) => handleDeleteChat(e, chat.id)} className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:text-destructive p-1 rounded-md transition-all">
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="p-3 border-t border-border/20">
+                                        <ProfileMenu />
+                                    </div>
+                                </>
+                            )}
+                        </div>
 
-                    {/* Sliding Input Container */}
-                    <div
-                        className={cn(
-                            "absolute transition-all duration-700 ease-in-out w-full flex flex-col items-center justify-center p-4",
-                            messages.length === 0
-                                ? "top-1/2 left-1/2 -translate-x-1/2 -translate-y-[60%]"
-                                : "top-auto bottom-0 left-1/2 -translate-x-1/2 translate-y-0 pb-6 bg-[#050505] border-t border-white/5 shadow-[0_-20px_40px_-5px_rgba(0,0,0,0.8)]"
-                        )}
-                    >
-                        {/* Wrapper for max-width that matches message width */}
-                        <div className="w-full max-w-3xl flex flex-col gap-8 transition-all duration-500">
-                            {/* Hero Text - Fades out when chat starts */}
-                            <div className={cn(
-                                "text-center space-y-2 transition-all duration-500 overflow-hidden",
-                                messages.length > 0 ? "opacity-0 h-0 scale-90" : "opacity-100 h-auto scale-100"
-                            )}>
-                                <h1 className="font-sans text-2xl text-foreground font-medium">
-                                    How can I help, {localStorage.getItem("userName")?.split(" ")[0] || "User"}?
-                                </h1>
-                            </div>
-
-                            {/* The Input Pill */}
-                            <form
-                                onSubmit={handleSubmit}
-                                className="w-full flex items-center gap-2 bg-[#212121] px-4 py-3 shadow-2xl rounded-3xl"
-                            >
+                        {/* Main Content Area */}
+                        <div className="flex-1 flex flex-col min-w-0 bg-transparent relative overflow-hidden">
+                            {!sidebarOpen && (
                                 <button
-                                    type="button"
-                                    className="p-1.5 text-muted-foreground hover:text-foreground transition-colors bg-white/5 hover:bg-white/10 rounded-full"
-                                    title="Add Attachment"
+                                    onClick={() => setSidebarOpen(true)}
+                                    className="fixed top-4 left-4 z-40 p-2.5 bg-secondary/80 backdrop-blur-xl border border-border/20 rounded-full text-muted-foreground hover:text-foreground shadow-xl transition-all hover:scale-105 active:scale-95"
                                 >
-                                    <Plus className="w-4 h-4" />
+                                    <PanelLeftOpen className="w-5 h-5" />
                                 </button>
-                                <div className="flex-1 flex flex-col justify-center px-2">
-                                    <textarea
-                                        value={input}
-                                        onChange={handleInputChange}
-                                        onKeyDown={(e) => {
-                                            if (e.key === "Enter" && !e.shiftKey) {
-                                                e.preventDefault()
-                                                handleSubmit(e as any)
-                                            }
-                                        }}
-                                        placeholder="Ask anything"
-                                        className="w-full bg-transparent border-none outline-none text-base placeholder:text-muted-foreground/50 resize-none max-h-32 py-1 scrollbar-hide"
-                                        rows={1}
-                                        disabled={isLoading}
-                                    />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        type="button"
-                                        onClick={isListening ? stopListening : startListening}
-                                        className={cn(
-                                            "p-2 transition-colors relative text-muted-foreground hover:text-foreground",
-                                            isListening && "text-red-500"
-                                        )}
-                                        title={isListening ? "Stop Listening" : "Voice Input"}
-                                    >
-                                        <Mic className={cn("w-5 h-5", isListening && "animate-pulse")} />
-                                    </button>
-                                    <button
-                                        type="submit"
-                                        disabled={!input.trim() || isLoading}
-                                        className={cn(
-                                            "p-2 rounded-full transition-all flex items-center justify-center",
-                                            input.trim() ? "bg-white text-black" : "bg-white/10 text-muted-foreground cursor-not-allowed"
-                                        )}
-                                    >
-                                        {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4 ml-0.5" />}
-                                    </button>
-                                </div>
-                            </form>
+                            )}
 
-                            {/* Footer Meta - Fades IN when chat starts */}
-                            <div className={cn(
-                                "flex justify-between items-center px-2 transition-all duration-700 delay-300",
-                                messages.length > 0 ? "opacity-100 max-h-10 mt-2" : "opacity-0 max-h-0 overflow-hidden"
-                            )}>
-                                <span className="text-[10px] uppercase tracking-widest text-muted-foreground/40">
-                                    VULCARIS AI
-                                </span>
+                            <div className="flex-1 flex flex-col relative overflow-hidden">
+                                <div ref={scrollRef} className={cn("flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-hide", messages.length === 0 ? "opacity-0" : "opacity-100")}>
+                                    <div className="pb-40 max-w-3xl mx-auto space-y-6">
+                                        {messages.map((m: any) => (
+                                            <div key={m.id} className={cn("flex w-full animate-in fade-in slide-in-from-bottom-2", m.role === "assistant" ? "justify-start" : "justify-end")}>
+                                                <div className={cn("max-w-[75%] rounded-[20px] px-4 py-2.5 text-[15px] leading-snug shadow-sm", m.role === "assistant" ? "bg-[#2C2C2E] text-white rounded-tl-md" : "bg-[#007AFF] text-white rounded-br-md")}>
+                                                    {m.content.replace(/\[MEMORY: .*?\]/g, "")}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className={cn("absolute transition-all duration-700 w-full flex flex-col items-center justify-center p-4", messages.length === 0 ? "top-[40%] left-0" : "bottom-0 pb-6")}>
+                                    <div className="w-full max-w-3xl flex flex-col gap-8">
+                                        <div className={cn("text-center space-y-3 transition-opacity duration-700", messages.length > 0 ? "opacity-0 pointer-events-none" : "opacity-100")}>
+                                            <h1 className="text-4xl md:text-5xl font-[800] tracking-tight">How are you doing, <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">{userName}</span>?</h1>
+                                        </div>
+
+                                        <form onSubmit={handleSubmit} className="w-full flex items-center gap-3 bg-secondary/80 backdrop-blur-xl border border-border/20 px-4 py-2.5 shadow-2xl rounded-[32px]">
+                                            <button type="button" className="p-1.5 text-muted-foreground hover:text-foreground rounded-full"><Plus className="w-5 h-5" /></button>
+                                            <div className="flex-1 flex flex-col justify-center">
+                                                <textarea value={input} onChange={handleInputChange} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSubmit(e as any); } }} placeholder="Message AI..." className="w-full bg-transparent border-none outline-none text-[15px] resize-none py-1.5" rows={1} disabled={isLoading} />
+                                            </div>
+                                            <div className="flex items-center gap-1.5">
+                                                <button type="button" onClick={() => setVoiceMode(true)} className="p-2.5 text-muted-foreground hover:text-primary rounded-full"><Headphones className="w-5 h-5" /></button>
+                                                <button type="button" onClick={isListening ? stopListening : startListening} className={cn("p-2.5 rounded-full", isListening && "text-destructive text-red-500")}><Mic className={cn("w-5 h-5", isListening && "animate-pulse")} /></button>
+                                                <button type="submit" disabled={!input.trim() || isLoading} className={cn("p-2.5 rounded-full", input.trim() ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground")}><Send className="w-4 h-4" /></button>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+            <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
         </div>
     )
 }

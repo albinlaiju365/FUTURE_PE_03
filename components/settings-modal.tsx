@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { User, Monitor, Bell, Settings, Save, Trash2, Volume2, VolumeX, RefreshCcw, BrainCircuit, X } from "lucide-react"
 import { toast } from "sonner"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { cn } from "@/lib/utils"
 
 type SettingsTab = "profile" | "bot" | "notifications" | "system" | "memory"
 
@@ -27,15 +28,21 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
     // System Settings
     const [soundEnabled, setSoundEnabled] = useState(true)
 
+    // Memory Settings
+    const [memories, setMemories] = useState<string[]>([])
+
     useEffect(() => {
         if (isOpen) {
             setActiveTab(defaultTab)
             const storedName = localStorage.getItem("userName")
             const storedEmail = localStorage.getItem("userEmail")
             const storedPersona = localStorage.getItem("nexis_persona")
+            const storedMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]")
+
             if (storedName) setUserName(storedName)
             if (storedEmail) setUserEmail(storedEmail)
             if (storedPersona) setPersona(storedPersona)
+            setMemories(storedMemories)
         }
     }, [isOpen, defaultTab])
 
@@ -58,67 +65,70 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[600px] bg-[#0A0A0A] border border-white/10 text-foreground overflow-hidden">
-                <DialogHeader>
-                    <DialogTitle className="font-mono text-sm uppercase tracking-widest text-muted-foreground">
-                        Control Panel // {activeTab}
-                    </DialogTitle>
-                </DialogHeader>
+            <DialogContent className="sm:max-w-[650px] bg-background border border-border/20 text-foreground overflow-hidden rounded-[20px] shadow-2xl p-0">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border/10">
+                    <DialogHeader>
+                        <DialogTitle className="text-lg font-semibold tracking-tight text-foreground/90">
+                            Settings
+                        </DialogTitle>
+                    </DialogHeader>
+                    <button onClick={onClose} className="p-1.5 hover:bg-secondary rounded-full transition-colors">
+                        <X className="w-4 h-4 text-muted-foreground" />
+                    </button>
+                </div>
 
-                <Tabs value={activeTab} onValueChange={(v: string) => setActiveTab(v as SettingsTab)} className="w-full flex flex-col md:flex-row gap-6 mt-4">
-                    <TabsList className="flex flex-col h-auto bg-transparent items-start gap-2 min-w-[150px]">
-                        <TabsTrigger value="profile" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
+                <Tabs value={activeTab} onValueChange={(v: string) => setActiveTab(v as SettingsTab)} className="w-full flex">
+                    <TabsList className="flex flex-col h-auto bg-sidebar p-3 items-start gap-1 min-w-[200px] border-r border-border/10">
+                        <TabsTrigger value="profile" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
                             <User className="w-4 h-4" /> Profile
                         </TabsTrigger>
-                        <TabsTrigger value="bot" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
-                            <Monitor className="w-4 h-4" /> Bot Logic
+                        <TabsTrigger value="bot" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
+                            <BrainCircuit className="w-4 h-4" /> AI Models
                         </TabsTrigger>
-                        <TabsTrigger value="memory" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
-                            <BrainCircuit className="w-4 h-4" /> Memory Bank
+                        <TabsTrigger value="memory" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
+                            <Monitor className="w-4 h-4" /> Memory Bank
                         </TabsTrigger>
-                        <TabsTrigger value="notifications" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
-                            <Bell className="w-4 h-4" /> Comm Logs
-                        </TabsTrigger>
-                        <TabsTrigger value="system" className="w-full justify-start gap-3 font-mono text-xs uppercase data-[state=active]:bg-white/5 data-[state=active]:text-accent">
-                            <Settings className="w-4 h-4" /> System
+                        <TabsTrigger value="system" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
+                            <Settings className="w-4 h-4" /> General
                         </TabsTrigger>
                     </TabsList>
 
-                    <div className="flex-1 min-h-[300px]">
+                    <div className="flex-1 min-h-[400px] p-8">
                         {/* PROFILE TAB */}
-                        <TabsContent value="profile" className="space-y-6 mt-0">
+                        <TabsContent value="profile" className="space-y-8 mt-0 animate-in fade-in slide-in-from-right-4 duration-300">
                             <div className="flex items-center gap-6">
-                                <Avatar className="h-20 w-20 border-2 border-white/10">
+                                <Avatar className="h-20 w-20 border border-border/10">
                                     <AvatarImage src={`https://api.dicebear.com/7.x/pixel-art/svg?seed=${userName}`} />
                                     <AvatarFallback>OP</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <h3 className="font-bold text-lg">{userName || "Operative"}</h3>
-                                    <span className="font-mono text-xs text-muted-foreground">{userEmail || "Connect Wallet ID"}</span>
+                                    <h3 className="font-semibold text-xl">{userName || "User"}</h3>
+                                    <span className="text-sm text-muted-foreground">{userEmail || "Personal Profile"}</span>
                                 </div>
                             </div>
-                            <div className="space-y-4">
+                            <div className="space-y-6">
                                 <div className="space-y-2">
-                                    <label className="font-mono text-[10px] uppercase text-muted-foreground">Operative Name</label>
+                                    <label className="text-xs font-semibold text-foreground/70 tracking-tight">Name</label>
                                     <input
                                         value={userName}
                                         onChange={(e) => setUserName(e.target.value)}
-                                        className="w-full bg-white/5 border border-white/10 px-4 py-3 text-sm focus:border-accent outline-none rounded-sm font-mono"
+                                        className="w-full bg-secondary/50 border border-border/10 px-4 py-2.5 text-[15px] focus:ring-2 focus:ring-primary/20 outline-none rounded-xl transition-all"
+                                        placeholder="Your Name"
                                     />
                                 </div>
-                                <button onClick={handleSaveProfile} className="flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 text-xs font-mono uppercase tracking-widest hover:bg-accent/20 transition-colors border border-accent/20">
-                                    <Save className="w-3 h-3" /> Save Changes
+                                <button onClick={handleSaveProfile} className="flex items-center gap-2 bg-primary text-primary-foreground px-6 py-2 text-sm font-medium rounded-full shadow-lg shadow-primary/20 hover:opacity-90 transition-all">
+                                    <Save className="w-4 h-4" /> Save
                                 </button>
                             </div>
                         </TabsContent>
 
                         {/* BOT TAB */}
-                        <TabsContent value="bot" className="space-y-6 mt-0">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="flex justify-between font-mono text-[10px] uppercase text-muted-foreground">
+                        <TabsContent value="bot" className="space-y-8 mt-0 animate-in fade-in slide-in-from-right-4 duration-300">
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <label className="flex justify-between text-sm font-semibold text-foreground/70">
                                         <span>Creativity (Temperature)</span>
-                                        <span className="text-accent">{temperature}</span>
+                                        <span className="text-primary">{temperature}</span>
                                     </label>
                                     <input
                                         type="range"
@@ -127,28 +137,32 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                                         step="0.1"
                                         value={temperature}
                                         onChange={(e) => setTemperature(parseFloat(e.target.value))}
-                                        className="w-full accent-accent h-1 bg-white/10 appearance-none rounded-full cursor-pointer"
+                                        className="w-full accent-primary h-1.5 bg-secondary rounded-full appearance-none cursor-pointer"
                                     />
-                                    <p className="text-[10px] text-muted-foreground">Higher values make the AI more unpredictable and creative.</p>
+                                    <p className="text-[13px] text-muted-foreground leading-snug">The temperature setting controls the randomness of the model's output.</p>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="font-mono text-[10px] uppercase text-muted-foreground">Base Persona</label>
+                                <div className="space-y-3">
+                                    <label className="text-sm font-semibold text-foreground/70">Interface Persona</label>
                                     <div className="grid grid-cols-2 gap-3">
-                                        <button
-                                            onClick={() => handlePersonaChange("inventor")}
-                                            className={`p-3 border text-left transition-all ${persona === 'inventor' ? 'border-accent bg-accent/5' : 'border-white/10 hover:border-white/20'}`}
-                                        >
-                                            <div className="font-bold text-xs uppercase mb-1">The Inventor</div>
-                                            <div className="text-[10px] text-muted-foreground">Eccentric, brilliant, chaotic.</div>
-                                        </button>
-                                        <button
-                                            onClick={() => handlePersonaChange("nexis")}
-                                            className={`p-3 border text-left transition-all ${persona === 'nexis' ? 'border-accent bg-accent/5' : 'border-white/10 hover:border-white/20'}`}
-                                        >
-                                            <div className="font-bold text-xs uppercase mb-1">NEXIS Core</div>
-                                            <div className="text-[10px] text-muted-foreground">Helpful, precise, friendly.</div>
-                                        </button>
+                                        {[
+                                            { id: 'inventor', name: 'The Inventor', desc: 'Eccentric & Chaotic' },
+                                            { id: 'nexis', name: 'Nexis Core', desc: 'Helpful & Balanced' }
+                                        ].map((p) => (
+                                            <button
+                                                key={p.id}
+                                                onClick={() => handlePersonaChange(p.id)}
+                                                className={cn(
+                                                    "p-3.5 border rounded-2xl text-left transition-all",
+                                                    persona === p.id
+                                                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                                                        : "border-border/10 hover:bg-secondary/50 grayscale hover:grayscale-0"
+                                                )}
+                                            >
+                                                <div className="font-semibold text-sm mb-1">{p.name}</div>
+                                                <div className="text-[12px] text-muted-foreground">{p.desc}</div>
+                                            </button>
+                                        ))}
                                     </div>
                                 </div>
                             </div>
@@ -170,21 +184,21 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                                 <div className="space-y-2">
                                     <label className="font-mono text-[10px] uppercase text-muted-foreground flex justify-between">
                                         <span>Stored Memories</span>
-                                        <span className="text-accent">{(JSON.parse(localStorage.getItem("ai_memories") || "[]")).length} Nodes</span>
+                                        <span className="text-accent">{memories.length} Nodes</span>
                                     </label>
                                     <div className="h-[200px] overflow-y-auto border border-white/10 rounded-sm bg-black/20 p-2 space-y-2">
-                                        {(JSON.parse(localStorage.getItem("ai_memories") || "[]") as string[]).length === 0 ? (
+                                        {memories.length === 0 ? (
                                             <div className="flex flex-col items-center justify-center h-full text-muted-foreground/30 italic text-xs">
                                                 No memories formed yet.
                                             </div>
                                         ) : (
-                                            (JSON.parse(localStorage.getItem("ai_memories") || "[]") as string[]).map((mem, i) => (
+                                            memories.map((mem, i) => (
                                                 <div key={i} className="group flex items-start justify-between p-3 bg-white/5 border border-white/5 hover:border-accent/30 transition-colors text-xs">
                                                     <span className="text-white/80">{mem}</span>
                                                     <button
                                                         onClick={() => {
-                                                            const current = JSON.parse(localStorage.getItem("ai_memories") || "[]") as string[]
-                                                            const updated = current.filter((_, idx) => idx !== i)
+                                                            const updated = memories.filter((_, idx) => idx !== i)
+                                                            setMemories(updated)
                                                             localStorage.setItem("ai_memories", JSON.stringify(updated))
                                                             window.dispatchEvent(new Event("storage")) // Force update
                                                             toast.success("Memory Node Deleted")
