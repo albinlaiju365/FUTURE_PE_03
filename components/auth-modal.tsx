@@ -34,7 +34,7 @@ export function AuthModal({ isOpen, onClose, initialMode = "login", onSuccess }:
     return (
         <AnimatePresence>
             {isOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                <div className="fixed inset-0 z-[100] flex items-start justify-center p-4 overflow-y-auto pt-20 md:items-center md:pt-4">
                     {/* Backdrop with heavy blur */}
                     <motion.div
                         initial={{ opacity: 0 }}
@@ -50,36 +50,38 @@ export function AuthModal({ isOpen, onClose, initialMode = "login", onSuccess }:
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.9, y: 20 }}
                         transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                        className="relative w-full max-w-lg z-10"
+                        className="relative w-full max-w-md z-10"
                     >
-                        {/* Close Button - Responsive Position */}
-                        <button
-                            onClick={onClose}
-                            className="absolute top-0 right-0 md:-top-12 md:-right-12 z-50 p-3 text-muted-foreground hover:text-white transition-all hover:scale-110 active:scale-90"
-                        >
-                            <X className="w-6 h-6" />
-                        </button>
-
                         {/* Custom Container - Clean & Floating (No Box) */}
-                        <div className="relative backdrop-blur-2xl bg-black/5 overflow-hidden">
-                            {/* Mode Toggle Bar - Flat and Seamless */}
-                            <div className="flex">
+                        {/* Custom Container - Clean & Floating (No Box) */}
+                        <div className="relative backdrop-blur-3xl bg-black/60 border border-white/10 overflow-hidden rounded-xl shadow-2xl">
+                            {/* Top Bar with Tabs and Close */}
+                            <div className="flex items-center border-b border-white/5 bg-white/[0.02]">
+                                <div className="flex flex-1">
+                                    <button
+                                        onClick={() => setMode("login")}
+                                        className={`flex-1 py-4 font-mono text-[9px] uppercase tracking-[0.3em] transition-all ${mode === 'login' ? 'text-accent bg-accent/5 font-bold' : 'text-muted-foreground hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        [ ACCESS_LOGIN ]
+                                    </button>
+                                    <button
+                                        onClick={() => setMode("signup")}
+                                        className={`flex-1 py-4 font-mono text-[9px] uppercase tracking-[0.3em] transition-all ${mode === 'signup' ? 'text-accent bg-accent/5 font-bold' : 'text-muted-foreground hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        [ INITIALIZE_SIG ]
+                                    </button>
+                                </div>
                                 <button
-                                    onClick={() => setMode("login")}
-                                    className={`flex-1 py-4 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${mode === 'login' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground hover:text-white'}`}
+                                    onClick={onClose}
+                                    className="p-4 text-muted-foreground hover:text-white transition-all border-l border-white/5 hover:bg-red-500/10 group"
+                                    title="TERMINATE_SESSION"
                                 >
-                                    Login_Access
-                                </button>
-                                <button
-                                    onClick={() => setMode("signup")}
-                                    className={`flex-1 py-4 font-mono text-[10px] uppercase tracking-[0.3em] transition-all ${mode === 'signup' ? 'text-accent border-b-2 border-accent' : 'text-muted-foreground hover:text-white'}`}
-                                >
-                                    Signup_Initialize
+                                    <X className="w-4 h-4 group-hover:rotate-90 transition-transform" />
                                 </button>
                             </div>
 
                             {/* Render the Login/Signup pages but nested */}
-                            <div className="py-4">
+                            <div className="py-2">
                                 {mode === "login" ? (
                                     <div className="origin-top mt-0">
                                         <LoginPage

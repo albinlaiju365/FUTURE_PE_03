@@ -92,7 +92,7 @@ export default function LoginPage({
                     <div
                         className="absolute inset-0 z-0 opacity-20 grayscale transition-all duration-1000"
                         style={{
-                            backgroundImage: `url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=2000')`,
+                            backgroundImage: `url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60&w=1200')`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
                         }}
@@ -113,8 +113,8 @@ export default function LoginPage({
                     {/* Top Status Bar */}
                     {!isModal && <div className="h-0.5 w-full bg-accent/30" />}
 
-                    <div className={cn("p-6 md:p-12", isModal && "p-4")}>
-                        <div className="mb-10 text-center">
+                    <div className={cn("p-6 md:p-12", isModal && "p-6")}>
+                        <div className={cn("mb-10 text-center", isModal && "mb-4")}>
                             {!isModal && (
                                 <motion.div
                                     initial={{ opacity: 0 }}
@@ -139,7 +139,7 @@ export default function LoginPage({
                             </h1>
                         </div>
 
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className={cn("space-y-6", isModal && "space-y-3")}>
                             <div className="space-y-2">
                                 <label className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-muted-foreground ml-1">
                                     <span>TERMINAL_ID</span>
@@ -153,7 +153,10 @@ export default function LoginPage({
                                     </div>
                                     <input
                                         {...form.register("email")}
-                                        className="block w-full bg-white/[0.03] border border-white/5 py-4 pl-12 pr-4 text-sm text-foreground placeholder:text-muted-foreground/10 focus:outline-none focus:border-accent/40 focus:bg-white/[0.05] transition-all duration-300"
+                                        className={cn(
+                                            "block w-full bg-white/[0.03] border border-white/5 py-4 pl-12 pr-4 text-sm text-foreground placeholder:text-muted-foreground/10 focus:outline-none focus:border-accent/40 focus:bg-white/[0.05] transition-all duration-300",
+                                            isModal && "py-3"
+                                        )}
                                         placeholder="admin@nexis.ai"
                                     />
                                 </div>
@@ -206,7 +209,10 @@ export default function LoginPage({
                                     <input
                                         {...form.register("password")}
                                         type={showPassword ? "text" : "password"}
-                                        className="block w-full bg-white/[0.03] border border-white/5 py-4 pl-12 pr-12 text-sm text-foreground placeholder:text-muted-foreground/10 focus:outline-none focus:border-accent/40 focus:bg-white/[0.05] transition-all duration-300"
+                                        className={cn(
+                                            "block w-full bg-white/[0.03] border border-white/5 py-4 pl-12 pr-12 text-sm text-foreground placeholder:text-muted-foreground/10 focus:outline-none focus:border-accent/40 focus:bg-white/[0.05] transition-all duration-300",
+                                            isModal && "py-3"
+                                        )}
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -222,7 +228,10 @@ export default function LoginPage({
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full relative group mt-4 overflow-hidden bg-foreground text-background py-5 px-6 font-bold transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50"
+                                className={cn(
+                                    "w-full relative group mt-4 overflow-hidden bg-foreground text-background py-5 px-6 font-bold transition-all duration-500 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50",
+                                    isModal && "py-3 mt-2"
+                                )}
                             >
                                 <div className="relative z-10 flex items-center justify-center gap-3">
                                     {isLoading ? (
@@ -242,23 +251,23 @@ export default function LoginPage({
                             </button>
                         </form>
 
-                        <div className="mt-12">
-                            <div className="relative mb-8 text-center">
+                        <div className={cn("mt-12", isModal && "mt-6")}>
+                            <div className={cn("relative mb-8 text-center", isModal && "mb-4")}>
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-white/5"></div>
                                 </div>
-                                <span className="relative px-3 bg-[#050505] text-[8px] uppercase tracking-[0.5em] text-muted-foreground/30 font-mono italic">3rd Party Auth</span>
+                                <span className={cn("relative px-3 bg-[#050505] text-[8px] uppercase tracking-[0.5em] text-muted-foreground/30 font-mono italic", isModal && "bg-transparent")}>3rd Party Auth</span>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <button className="flex items-center justify-center gap-3 border border-white/5 py-4 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group">
+                                <button className={cn("flex items-center justify-center gap-3 border border-white/5 py-4 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group", isModal && "py-3")}>
                                     <Github className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                                     GitHub
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => window.location.href = "/api/auth/google"}
-                                    className="flex items-center justify-center gap-3 border border-white/5 py-4 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group"
+                                    className={cn("flex items-center justify-center gap-3 border border-white/5 py-4 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group", isModal && "py-3")}
                                 >
                                     <Chrome className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                                     Google
@@ -266,7 +275,7 @@ export default function LoginPage({
                             </div>
                         </div>
 
-                        <div className={cn("text-center border-t border-white/5", isModal ? "mt-8 pt-6" : "mt-12 pt-8")}>
+                        <div className={cn("text-center border-t border-white/5", isModal ? "mt-6 pt-4" : "mt-12 pt-8")}>
                             <p className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground/60">
                                 No profile found?{" "}
                                 {isModal ? (

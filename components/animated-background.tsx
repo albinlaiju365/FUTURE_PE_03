@@ -55,6 +55,7 @@ export function AnimatedBackground({ className }: AnimatedBackgroundProps) {
                         height: "45vw",
                         top: blob.top,
                         left: blob.left,
+                        willChange: "transform",
                     }}
                     animate={{
                         x: blob.x,

@@ -96,10 +96,10 @@ export default function SignupPage({
                     <div
                         className="absolute inset-0 z-0 opacity-30 mix-blend-screen scale-110 pointer-events-none"
                         style={{
-                            backgroundImage: `url('/futuristic_login_background_1768587543034.png')`,
+                            backgroundImage: `url('https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=60&w=1200')`,
                             backgroundSize: 'cover',
                             backgroundPosition: 'center',
-                            filter: 'hue-rotate(180deg) brightness(0.5)',
+                            filter: 'hue-rotate(180deg) brightness(0.4)',
                         }}
                     />
 
@@ -159,14 +159,14 @@ export default function SignupPage({
                             </div>
                         )}
 
-                        <div className="mb-8">
-                            <h1 className="font-[family-name:var(--font-display)] text-2xl tracking-tight text-foreground uppercase text-center">
+                        <div className={cn("mb-8", isModal && "mb-4")}>
+                            <h1 className="font-[family-name:var(--font-display)] text-xl tracking-tight text-foreground uppercase text-center">
                                 {isModal ? "INITIALIZE_PROFILE" : "Create Operative Profile"}
                             </h1>
                         </div>
 
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                            <div className="space-y-2">
+                        <form onSubmit={form.handleSubmit(onSubmit)} className={cn("space-y-5", isModal && "space-y-3")}>
+                            <div className={cn("space-y-2", isModal && "space-y-1")}>
                                 <label className="flex items-center justify-between font-mono text-[10px] uppercase tracking-widest text-muted-foreground ml-1">
                                     <span>OPERATIVE_NAME</span>
                                     {form.formState.errors.name && (
@@ -179,7 +179,10 @@ export default function SignupPage({
                                     </div>
                                     <input
                                         {...form.register("name")}
-                                        className="w-full bg-background/50 border border-border px-11 py-3 font-mono text-sm text-foreground focus:border-accent outline-none transition-colors"
+                                        className={cn(
+                                            "w-full bg-background/50 border border-border px-11 py-3 font-mono text-sm text-foreground focus:border-accent outline-none transition-colors",
+                                            isModal && "py-2"
+                                        )}
                                         placeholder="Identity Code"
                                     />
                                 </div>
@@ -198,7 +201,10 @@ export default function SignupPage({
                                     </div>
                                     <input
                                         {...form.register("email")}
-                                        className="w-full bg-background/50 border border-border px-11 py-3 font-mono text-sm text-foreground focus:border-accent outline-none transition-colors"
+                                        className={cn(
+                                            "w-full bg-background/50 border border-border px-11 py-3 font-mono text-sm text-foreground focus:border-accent outline-none transition-colors",
+                                            isModal && "py-2"
+                                        )}
                                         placeholder="agent@nexis.ai"
                                     />
                                 </div>
@@ -218,7 +224,10 @@ export default function SignupPage({
                                     <input
                                         {...form.register("password")}
                                         type={showPassword ? "text" : "password"}
-                                        className="w-full bg-background/50 border border-border px-11 py-3 font-mono text-sm text-foreground focus:border-accent outline-none transition-colors"
+                                        className={cn(
+                                            "w-full bg-background/50 border border-border px-11 py-3 font-mono text-sm text-foreground focus:border-accent outline-none transition-colors",
+                                            isModal && "py-2"
+                                        )}
                                         placeholder="••••••••"
                                     />
                                     <button
@@ -235,7 +244,10 @@ export default function SignupPage({
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full relative group mt-8 overflow-hidden bg-white/5 border border-white/10 py-4 px-6 transition-all duration-300 hover:bg-accent/10 hover:border-accent/50 disabled:opacity-50"
+                                className={cn(
+                                    "w-full relative group mt-8 overflow-hidden bg-white/5 border border-white/10 py-4 px-6 transition-all duration-300 hover:bg-accent/10 hover:border-accent/50 disabled:opacity-50",
+                                    isModal && "mt-4 py-2.5"
+                                )}
                             >
                                 <div className="relative z-10 flex items-center justify-center gap-3">
                                     {isLoading ? (
@@ -251,8 +263,8 @@ export default function SignupPage({
                             </button>
                         </form>
 
-                        <div className="mt-8">
-                            <div className="relative mb-6 text-center">
+                        <div className={cn("mt-8", isModal && "mt-4")}>
+                            <div className={cn("relative mb-6 text-center", isModal && "mb-3")}>
                                 <div className="absolute inset-0 flex items-center">
                                     <div className="w-full border-t border-white/5"></div>
                                 </div>
@@ -260,14 +272,14 @@ export default function SignupPage({
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <button className="flex items-center justify-center gap-3 border border-white/5 py-3 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group">
+                                <button className={cn("flex items-center justify-center gap-3 border border-white/5 py-3 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group", isModal && "py-2")}>
                                     <Github className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                                     GitHub
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => window.location.href = "/api/auth/google"}
-                                    className="flex items-center justify-center gap-3 border border-white/5 py-3 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group"
+                                    className={cn("flex items-center justify-center gap-3 border border-white/5 py-3 font-mono text-[9px] uppercase tracking-widest hover:bg-white/[0.02] hover:border-white/10 transition-all duration-300 group", isModal && "py-2")}
                                 >
                                     <Chrome className="w-4 h-4 opacity-40 group-hover:opacity-100 transition-opacity" />
                                     Google

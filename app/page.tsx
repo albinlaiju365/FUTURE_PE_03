@@ -11,8 +11,10 @@ import { ProfileMenu } from "@/components/profile-menu"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AnimatedBackground } from "@/components/animated-background"
 import { AuthModal } from "@/components/auth-modal"
+import { useRouter } from "next/navigation"
 
 export default function Page() {
+  const router = useRouter()
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   const [authMode, setAuthMode] = useState<"login" | "signup">("login")
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -31,7 +33,7 @@ export default function Page() {
 
           // Auto-redirect to chat if valid session exists
           if (window.location.pathname === "/") {
-            window.location.href = "/chat"
+            router.push("/chat")
           }
         } else {
           setIsLoggedIn(false)

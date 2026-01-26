@@ -4,6 +4,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { MemoryManager } from '@/lib/agents/memory-manager';
 import { PlannerAgent } from '@/lib/agents/planner';
 import { CriticAgent } from '@/lib/agents/critic';
+import { ExtractionAgent } from '@/lib/agents/extractor';
+import { sql } from '@/lib/db';
 
 
 export const maxDuration = 30;
@@ -23,7 +25,7 @@ export async function POST(req: Request) {
         const userId = user.id;
 
         // 3. AGENTIC PLANNING LAYER (Gemini Flash)
-        const { messages, projectMode, persona: requestedPersona } = await req.json();
+        const { messages, projectMode, persona: requestedPersona, temperature = 0.7 } = await req.json();
         const lastMessage = messages[messages.length - 1].content;
 
         // 2. MEMORY RETRIEVAL LAYER (RAG)
@@ -102,11 +104,36 @@ export async function POST(req: Request) {
             model: groq('llama-3.3-70b-versatile'),
             system: systemPrompt,
             messages,
+            temperature,
             async onFinish({ text }) {
-                // Background: Active Learning (Save new insights)
-                if (text.length > 50 && userId !== 0) {
-                    // In the future, call Extraction Agent here
-                    // MemoryManager.store(userId, "Interaction summary...", "ephemeral");
+                // Background: Active Learning Pipeline (ML-based Memory Extraction)
+                // We run this after the response is sent to minimize latency for the user.
+                if (text.length > 10 && userId) {
+                    try {
+                        const extractionResult = await ExtractionAgent.extract(lastMessage, text);
+                        if (extractionResult) {
+                            // Sync Memories to DB
+                            const memoryPromises = extractionResult.memories.map(memory =>
+                                MemoryManager.store(
+                                    userId,
+                                    memory.content,
+                                    memory.type as any,
+                                    memory.importance as any
+                                )
+                            );
+
+                            // Sync Identity Updates (e.g. name changes mentioned in chat)
+                            if (extractionResult.updates?.name) {
+                                memoryPromises.push(
+                                    sql`UPDATE users SET name = ${extractionResult.updates.name} WHERE id = ${userId}`.then(() => { }) as any
+                                );
+                            }
+
+                            await Promise.all(memoryPromises);
+                        }
+                    } catch (error) {
+                        console.error("Active Learning Error:", error);
+                    }
                 }
             },
         });

@@ -37,12 +37,28 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
             const storedName = localStorage.getItem("userName")
             const storedEmail = localStorage.getItem("userEmail")
             const storedPersona = localStorage.getItem("nexis_persona")
-            const storedMemories = JSON.parse(localStorage.getItem("ai_memories") || "[]")
+            const storedTemp = localStorage.getItem("nexis_temperature")
 
             if (storedName) setUserName(storedName)
             if (storedEmail) setUserEmail(storedEmail)
             if (storedPersona) setPersona(storedPersona)
-            setMemories(storedMemories)
+            if (storedTemp) setTemperature(parseFloat(storedTemp))
+
+            // Fetch memories from DB using ML-linked API
+            const fetchMemories = async () => {
+                try {
+                    const res = await fetch("/api/memories")
+                    const data = await res.json()
+                    if (data.memories) {
+                        const memoryStrings = data.memories.map((m: any) => m.content)
+                        setMemories(memoryStrings)
+                        localStorage.setItem("ai_memories", JSON.stringify(memoryStrings))
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch memories")
+                }
+            }
+            fetchMemories()
         }
     }, [isOpen, defaultTab])
 
@@ -52,9 +68,28 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
         window.dispatchEvent(new Event("storage"))
     }
 
-    const handleSaveProfile = () => {
-        if (userName) localStorage.setItem("userName", userName)
-        toast.success("Profile Updated", { description: "Identity protocols re-calibrated." })
+    const handleSaveProfile = async () => {
+        if (!userName) return
+
+        try {
+            const res = await fetch("/api/auth/me", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: userName })
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                localStorage.setItem("userName", data.user.name)
+                // Dispatch storage event to update other components (ProfileMenu, Chat, etc.)
+                window.dispatchEvent(new Event("storage"))
+                toast.success("Profile Updated", { description: "Identity protocols re-calibrated." })
+            } else {
+                throw new Error("Update failed")
+            }
+        } catch (e) {
+            toast.error("Update Denied", { description: "Uplink to neural core failed." })
+        }
     }
 
     const handleClearData = () => {
@@ -65,7 +100,7 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[650px] bg-background border border-border/20 text-foreground overflow-hidden rounded-[20px] shadow-2xl p-0">
+            <DialogContent showClose={false} className="sm:max-w-[650px] bg-background border border-border/20 text-foreground overflow-hidden rounded-[20px] shadow-2xl p-0">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-border/10">
                     <DialogHeader>
                         <DialogTitle className="text-lg font-semibold tracking-tight text-foreground/90">
@@ -87,6 +122,9 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                         </TabsTrigger>
                         <TabsTrigger value="memory" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
                             <Monitor className="w-4 h-4" /> Memory Bank
+                        </TabsTrigger>
+                        <TabsTrigger value="notifications" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
+                            <Bell className="w-4 h-4" /> Updates
                         </TabsTrigger>
                         <TabsTrigger value="system" className="w-full justify-start gap-3 text-sm font-medium rounded-lg px-3 py-2 data-[state=active]:bg-secondary data-[state=active]:text-primary transition-all">
                             <Settings className="w-4 h-4" /> General
@@ -136,7 +174,12 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                                         max="1"
                                         step="0.1"
                                         value={temperature}
-                                        onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                                        onChange={(e) => {
+                                            const val = parseFloat(e.target.value);
+                                            setTemperature(val);
+                                            localStorage.setItem("nexis_temperature", val.toString());
+                                            window.dispatchEvent(new Event("storage"));
+                                        }}
                                         className="w-full accent-primary h-1.5 bg-secondary rounded-full appearance-none cursor-pointer"
                                     />
                                     <p className="text-[13px] text-muted-foreground leading-snug">The temperature setting controls the randomness of the model's output.</p>
@@ -214,11 +257,15 @@ export function SettingsModal({ isOpen, onClose, defaultTab = "profile" }: Setti
                                 </div>
 
                                 <button
-                                    onClick={() => {
-                                        localStorage.removeItem("ai_memories")
-                                        toast.success("Memory Bank Wiped")
-                                        // Force re-render trick would be better here but simple for now
-                                        setTimeout(() => window.location.reload(), 500)
+                                    onClick={async () => {
+                                        try {
+                                            await fetch("/api/memories", { method: "DELETE" })
+                                            localStorage.removeItem("ai_memories")
+                                            setMemories([])
+                                            toast.success("Memory Bank Wiped")
+                                        } catch (e) {
+                                            toast.error("Wipe Failed")
+                                        }
                                     }}
                                     className="w-full flex items-center justify-center gap-2 p-3 border border-white/10 hover:bg-white/5 text-xs font-mono uppercase tracking-widest transition-colors text-muted-foreground hover:text-white"
                                 >

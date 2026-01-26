@@ -43,6 +43,31 @@ import { SettingsModal } from "@/components/settings-modal"
 import { HackerText } from "@/components/hacker-text"
 import { ProfileMenu } from "@/components/profile-menu"
 import { Conversation } from "@/components/conversation"
+import { TypewriterText } from "@/components/typewriter-text"
+
+interface Message {
+    id: string;
+    role: "user" | "assistant" | "system";
+    content: string;
+}
+
+const MessageItem = ({ message, isStreaming }: { message: Message; isStreaming?: boolean }) => {
+    const isAssistant = message.role === "assistant";
+    return (
+        <div className={cn("flex w-full animate-in fade-in slide-in-from-bottom-2", isAssistant ? "justify-start" : "justify-end")}>
+            <div className={cn(
+                "max-w-[85%] md:max-w-[75%] rounded-[20px] px-4 py-3 text-[15px] leading-snug shadow-sm transition-all",
+                isAssistant ? "bg-[#1E1E1E] text-white/90 border border-white/5 rounded-tl-md" : "bg-primary text-primary-foreground rounded-br-md"
+            )}>
+                {isAssistant ? (
+                    <TypewriterText text={message.content} isStreaming={isStreaming} />
+                ) : (
+                    message.content
+                )}
+            </div>
+        </div>
+    );
+}
 
 function ChatContent() {
     const router = useRouter()
@@ -58,29 +83,63 @@ function ChatContent() {
     const [projectMode, setProjectMode] = useState<"research" | "web" | null>(null)
     const [persona, setPersona] = useState("nexis")
     const [userName, setUserName] = useState("User")
+    const [temperature, setTemperature] = useState(0.7)
     const [voiceMode, setVoiceMode] = useState(false)
 
-    // Load memories for context
+    // Load memories and sync user info
     const [memories, setMemories] = useState<string[]>([])
     useEffect(() => {
+        const fetchUser = async () => {
+            try {
+                const res = await fetch("/api/auth/me")
+                const data = await res.json()
+                if (data.user) {
+                    setUserName(data.user.name)
+                    localStorage.setItem("userName", data.user.name)
+                    localStorage.setItem("userEmail", data.user.email)
+                    localStorage.setItem("isLoggedIn", "true")
+                    // Dispatch storage event to update other components
+                    window.dispatchEvent(new Event("storage"))
+                }
+
+                // ALSO FETCH MEMORIES
+                const memRes = await fetch("/api/memories")
+                const memData = await memRes.json()
+                if (memData.memories) {
+                    const memoryStrings = memData.memories.map((m: any) => m.content)
+                    setMemories(memoryStrings)
+                    localStorage.setItem("ai_memories", JSON.stringify(memoryStrings))
+                }
+            } catch (e) {
+                console.error("Failed to sync user info")
+            }
+        }
+
+        fetchUser()
+
         const saved = localStorage.getItem("ai_memories")
         if (saved) setMemories(JSON.parse(saved))
         const savedPersona = localStorage.getItem("nexis_persona")
         if (savedPersona) setPersona(savedPersona)
         const savedName = localStorage.getItem("userName")
         if (savedName) setUserName(savedName)
+        const savedTemp = localStorage.getItem("nexis_temperature")
+        if (savedTemp) setTemperature(parseFloat(savedTemp))
+
         const handleStorage = () => {
             const newPersona = localStorage.getItem("nexis_persona")
             if (newPersona) setPersona(newPersona)
             const newName = localStorage.getItem("userName")
             if (newName) setUserName(newName)
+            const newTemp = localStorage.getItem("nexis_temperature")
+            if (newTemp) setTemperature(parseFloat(newTemp))
         }
         window.addEventListener("storage", handleStorage)
         return () => window.removeEventListener("storage", handleStorage)
     }, [])
 
     const chatConfig = useMemo(() => ({
-        body: { projectMode, memories, persona },
+        body: { projectMode, memories, persona, temperature },
         onFinish: (message: any) => {
             const content = message.content;
             const memoryMatch = content.match(/\[MEMORY: (.*?)\]/);
@@ -101,7 +160,7 @@ function ChatContent() {
     const hasTriggeredInit = useRef(false)
 
     const [chats, setChats] = useState<{ id: string; title: string; messages: any[]; type: "standard" | "project"; mode?: "research" | "web" }[]>([])
-    const [currentChatId, setCurrentChatId] = useState(Date.now().toString())
+    const [currentChatId, setCurrentChatId] = useState<string>("")
     const [isHistoryLoaded, setIsHistoryLoaded] = useState(false)
 
     useEffect(() => {
@@ -220,10 +279,12 @@ function ChatContent() {
     };
 
     useEffect(() => {
-        if (messages.length === 0 && !hasTriggeredInit.current && !initialQuery) {
+        if (!currentChatId && !hasTriggeredInit.current && !initialQuery) {
+            const newId = Date.now().toString();
+            setCurrentChatId(newId);
             handleNewChat("standard");
         }
-    }, []);
+    }, [currentChatId, initialQuery]);
 
     const { isListening, transcript, startListening, stopListening, setTranscript: setSpeechTranscript } = useSpeechRecognition()
 
@@ -343,12 +404,12 @@ function ChatContent() {
                             <div className="flex-1 flex flex-col relative overflow-hidden">
                                 <div ref={scrollRef} className={cn("flex-1 overflow-y-auto p-4 md:p-8 space-y-6 scrollbar-hide", messages.length === 0 ? "opacity-0" : "opacity-100")}>
                                     <div className="pb-40 max-w-3xl mx-auto space-y-6">
-                                        {messages.map((m: any) => (
-                                            <div key={m.id} className={cn("flex w-full animate-in fade-in slide-in-from-bottom-2", m.role === "assistant" ? "justify-start" : "justify-end")}>
-                                                <div className={cn("max-w-[75%] rounded-[20px] px-4 py-2.5 text-[15px] leading-snug shadow-sm", m.role === "assistant" ? "bg-[#2C2C2E] text-white rounded-tl-md" : "bg-[#007AFF] text-white rounded-br-md")}>
-                                                    {m.content.replace(/\[MEMORY: .*?\]/g, "")}
-                                                </div>
-                                            </div>
+                                        {messages.map((m: Message, idx: number) => (
+                                            <MessageItem
+                                                key={m.id}
+                                                message={m}
+                                                isStreaming={isLoading && idx === messages.length - 1 && m.role === "assistant"}
+                                            />
                                         ))}
                                     </div>
                                 </div>

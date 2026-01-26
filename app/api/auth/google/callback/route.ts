@@ -63,11 +63,23 @@ export async function GET(request: Request) {
             const name = googleUser.name || googleUser.given_name || googleUser.email.split('@')[0];
 
             const newUser = await sql`
-        INSERT INTO users (name, email, password)
-        VALUES (${name}, ${googleUser.email}, ${hashedPassword})
-        RETURNING *
-      `;
+                INSERT INTO users (name, email, password)
+                VALUES (${name}, ${googleUser.email}, ${hashedPassword})
+                RETURNING *
+            `;
             user = newUser.rows[0];
+        } else {
+            // UPDATE: If user already exists, sync name from Google as requested
+            const googleName = googleUser.name || googleUser.given_name || googleUser.email.split('@')[0];
+            if (user.name !== googleName) {
+                const updated = await sql`
+                    UPDATE users 
+                    SET name = ${googleName} 
+                    WHERE id = ${user.id}
+                    RETURNING *
+                `;
+                user = updated.rows[0];
+            }
         }
 
         // Generate Session

@@ -47,10 +47,16 @@ export function ProfileMenu({ onAuthClick }: { onAuthClick?: (mode: "login" | "s
     const [userEmail, setUserEmail] = useState("guest@nexis.ai")
 
     useEffect(() => {
-        const name = localStorage.getItem("userName")
-        const email = localStorage.getItem("userEmail")
-        if (name) setUserName(name)
-        if (email) setUserEmail(email)
+        const syncUserInfo = () => {
+            const name = localStorage.getItem("userName")
+            const email = localStorage.getItem("userEmail")
+            if (name) setUserName(name)
+            if (email) setUserEmail(email)
+        }
+
+        syncUserInfo()
+        window.addEventListener("storage", syncUserInfo)
+        return () => window.removeEventListener("storage", syncUserInfo)
     }, [])
 
     const handleLogout = async () => {
