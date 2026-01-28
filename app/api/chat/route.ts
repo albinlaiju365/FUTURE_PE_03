@@ -1,4 +1,4 @@
-import { createGroq } from '@ai-sdk/groq';
+import { createHuggingFace } from '@ai-sdk/huggingface';
 import { streamText } from 'ai';
 import { getCurrentUser } from '@/lib/auth';
 import { MemoryManager } from '@/lib/agents/memory-manager';
@@ -11,8 +11,8 @@ import { sql } from '@/lib/db';
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
-    const groq = createGroq({
-        apiKey: process.env.GROQ_API_KEY,
+    const hf = createHuggingFace({
+        apiKey: process.env.HUGGING_FACE_API_KEY,
     });
     try {
         // 1. AUTHENTICATION LAYER
@@ -101,7 +101,7 @@ export async function POST(req: Request) {
         `;
 
         const result = streamText({
-            model: groq('llama-3.3-70b-versatile'),
+            model: hf('nvidia/personaplex-7b-v1') as any,
             system: systemPrompt,
             messages,
             temperature,

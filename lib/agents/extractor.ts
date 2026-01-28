@@ -1,17 +1,17 @@
 import { generateObject } from 'ai';
-import { createGroq } from '@ai-sdk/groq';
+import { createHuggingFace } from '@ai-sdk/huggingface';
 import { z } from 'zod';
 
 // Specialized agent to extract and structure memories from conversations.
 export const ExtractionAgent = {
     async extract(userMessage: string, aiResponse: string) {
-        const groq = createGroq({
-            apiKey: process.env.GROQ_API_KEY
+        const hf = createHuggingFace({
+            apiKey: process.env.HUGGING_FACE_API_KEY
         });
 
         try {
             const { object } = await generateObject({
-                model: groq('llama-3.1-8b-instant'), // Using a smaller model for speed/efficiency in background tasks
+                model: hf('nvidia/personaplex-7b-v1') as any, // Using a smaller model for speed/efficiency in background tasks
                 mode: 'json',
                 schema: z.object({
                     memories: z.array(z.object({

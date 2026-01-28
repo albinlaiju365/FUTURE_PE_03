@@ -325,7 +325,12 @@ function ChatContent() {
                         <AnimatedBackground className="opacity-100" />
                         <div className="absolute inset-0 bg-background/40 backdrop-blur-3xl" />
                         <div className="relative z-10 w-full">
-                            <Conversation onClose={() => setVoiceMode(false)} />
+                            <Conversation
+                                onClose={() => setVoiceMode(false)}
+                                messages={messages}
+                                append={append}
+                                isLoading={isLoading}
+                            />
                         </div>
                     </motion.div>
                 ) : (

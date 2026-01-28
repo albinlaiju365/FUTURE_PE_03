@@ -1,17 +1,17 @@
 import { generateObject } from 'ai';
-import { createGroq } from '@ai-sdk/groq';
+import { createHuggingFace } from '@ai-sdk/huggingface';
 import { z } from 'zod';
 
 // We use a fast model for planning to keep latency low.
 export const PlannerAgent = {
     async plan(query: string, context: string, persona: string) {
-        const groq = createGroq({
-            apiKey: process.env.GROQ_API_KEY
+        const hf = createHuggingFace({
+            apiKey: process.env.HUGGING_FACE_API_KEY
         });
 
         try {
             const { object } = await generateObject({
-                model: groq('llama-3.3-70b-versatile'),
+                model: hf('nvidia/personaplex-7b-v1') as any,
                 mode: 'json',
                 schema: z.object({
                     intent: z.enum(['technical_explanation', 'creative_writing', 'debugging', 'casual_chat', 'system_command']),

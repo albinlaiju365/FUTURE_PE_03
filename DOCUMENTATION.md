@@ -1,103 +1,64 @@
-# NEXIS OS - Advanced AI Chatbot Documentation
+# NEXIS CORE - Advanced AI OS & Agentic Sidekick
 
-## 1. Project Overview
-**NEXIS OS** is a high-performance, agentic AI terminal designed with a "Dark Mode" cyberpunk aesthetic. It combines robust backend architecture (Vercel Postgres, Next.js 16) with a fluid, game-like frontend interface to provide a unique conversational experience.
+NEXIS is a high-performance, emotionally intelligent AI system designed to serve as a personal digital sidekick. Built with a sophisticated multi-agent architecture and a "Neural core" memory bank, it learns from every interaction to provide a truly personalized experience.
 
-## 2. Technology Stack
-- **Framework**: Next.js 16 (App Router, Turbopack)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4, Framer Motion (Animations)
-- **AI Infrastructure**: Vercel AI SDK, Groq (Llama/Mixtral), Google Gemini (Planning)
-- **Database**: Vercel Postgres (Serverless SQL)
-- **Authentication**: Custom JWT-based Auth (HttpOnly Cookies, Bcrypt hashing)
-- **State**: React Hooks + LocalStorage + Server Actions
+## 🚀 1. Core Architecture
+- **Framework**: Next.js 16+ (App Router)
+- **AI Intelligence**: Orchestrated via Groq (Llama 3.3 70B & 8B variants)
+- **Storage**: Vercel Postgres (SQL) for persistent identity and memories.
+- **Agentic Pipeline**: A three-node agentic system (Planner -> Critic -> Extractor).
 
-## 3. Core Features
+---
 
-### 🔐 Security & Authentication
-- **Secure Access**: All chat endpoints (`/api/chat`) are protected and require a valid session.
-- **Data Safety**:
-  - `JWT_SECRET` is rotated and cryptographically strong.
-  - Passwords are salted and hashed via `bcryptjs`.
-  - Database queries use parameterized SQL to prevent injection.
-  - **Guest Access is Disabled** by default for security.
+## 🧠 2. Intelligent Agent Nodes
+Unlike standard chatbots, Nexis uses a multi-agent decision loop for every message:
 
-### 🎭 Dynamic Personas (New!)
-The AI can switch between distinct personalities, affecting its tone, system prompt, and reasoning style.
-- **NEXIS Core** (Default): Friendly, emotional, "Best Friend" vibe. Uses empathetic language and casual tone.
-- **The Inventor**: Eccentric, scientific, chaotic genius. Uses technical metaphors and high-energy reasoning.
-- **Switching**: Users can toggle personas instantly via `Settings -> Bot Logic`. The preference persists across sessions.
+### A. The Planner Node (`planner.ts`)
+Analyzes your intent, context, and requested persona to create a sub-step execution plan. It decides whether to be technical, creative, or empathetic.
 
-### 🧠 Active Memory System
-- **Contextual Learning**: The AI identifies and memorizes user details (names, preferences, project ideas) automatically.
-- **Storage**: Memories are stored in `memories_v2` table (Postgres) and injected into future conversations.
-- **RAG Pipeline**: Relevant memories are retrieved based on vector similarity or keyword matching before generating a response.
+### B. The Critic Node (`critic.ts`)
+Reviews the internal plan for safety, alignment with the chosen persona, and technical accuracy before any response is generated.
 
-### 🗑️ Chat Management (New!)
-- **Individual Deletion**: Users can delete specific chat threads from the sidebar.
-- **UI**: A trash icon appears on hover for each chat item.
-- **Sync**: Deletion updates both local state and persistent storage immediately.
+### C. The Extraction Node (`extractor.ts`) - **Active Learning**
+The system's "Machine Learning" core. After every reply, this node runs in the background to:
+- Identify and store personal facts (Location, Preferences, Projects).
+- Update user identity (e.g., if you ask the AI to call you by a new name).
+- Categorize memories by importance (High, Medium, Low) and type (Identity, Behavioral, Project).
 
-### 🎙️ Voice Command
-- **Speech-to-Text**: Integrated Web Speech API for real-time voice input.
-- **Feedback**: Visual indicators for "Listening" and "Processing" states.
+---
 
-## 4. Architecture
+## 🔒 3. Authentication & Identity Sync
+- **Dual-Method Auth**: Supports secure Email/Password and one-click Google OAuth.
+- **Identity Fusion**: If you sign in with Google, Nexis automatically merges your Google profile data (Name, Profile Pic) with your local Nexis identity.
+- **Real-Time Sync**: Profile changes propagate instantly across the app using a global `storage` event system—no refresh required.
 
-### Directory Structure
-```
-├── app/
-│   ├── api/
-│   │   ├── auth/           # Login, Signup, Logout routes
-│   │   ├── chat/           # Main Agentic Pipeline (POST)
-│   │   └── enhance/        # Prompt refinement (Gemini)
-│   ├── chat/               # Main Chat Interface (Protected)
-│   └── page.tsx            # Landing Page
-├── components/
-│   ├── settings-modal.tsx  # Persona & Config UI
-│   ├── profile-menu.tsx    # User actions
-│   └── chatbot-ui.tsx      # Chat logic & rendering
-├── lib/
-│   ├── auth.ts             # Token & Password utilities
-│   ├── db.ts               # Vercel Postgres connection
-│   └── agents/             # Agentic Modules (Planner, Critic)
-```
+---
 
-### Agentic Pipeline (`/api/chat`)
-1.  **Auth Layer**: Verifies user session. Returns 401 if invalid.
-2.  **Memory Layer**: Retrieves user-specific memories from Postgres.
-3.  **Planning Layer**: A fast planner (Gemini Flash) analyzes the user request and creates an execution plan.
-4.  **Persona Layer**: Inject selected persona (Nexis/Inventor) into the system prompt.
-5.  **Execution Layer**: Groq (Llama-70b) generates the final response based on the plan and persona.
+## 🎙️ 4. Neural Voice Link (Multimodal)
+Nexis features a high-fidelity voice interface with a **Dual-Engine Failover System**:
 
-## 5. Setup & Development
+- **Engine X (Remote)**: Powered by ElevenLabs for ultra-realistic, low-latency conversational AI.
+- **Engine Nexis-Local (Fallback)**: If the remote link is unavailable, Nexis automatically switches to an optimized local engine using Web Speech API/TTS.
+- **Fluid UI**: An "Apple Intelligence" style fluid orb that reacts to speech patterns and thinking states in real-time.
 
-### Prerequisites
-- Node.js 18+
-- Vercel Account (for Postgres)
+---
 
-### Environment Variables (.env.local)
-```env
-# AI Keys
-GROQ_API_KEY=gsk_...
-GOOGLE_GENERATIVE_AI_API_KEY=AIza...
+## 💾 5. Neural Memory Bank
+- **Persistent Nodes**: Memories aren't just for the session—they are stored in Postgres.
+- **RAG (Retrieval Augmented Generation)**: Nexis pulls relevant memories from your history before answering to provide contextually aware replies.
+- **Bank Management**: A dedicated UI tab in Settings allows you to view, delete, or wipe your learned memories.
 
-# Security
-JWT_SECRET=your-strong-secret-key...
+---
 
-# Database (Vercel Postgres)
-POSTGRES_URL=...
-POSTGRES_URL_NON_POOLING=...
-```
+## ✨ 6. Advanced Interface Features
+- **Holographic Typewriter**: AI responses are projected letter-by-letter with a simulated terminal cursor for an immersive narrative feel.
+- **Interface Personas**: Switch between "Nexis Core" (Friendly/Empathetic) and "The Inventor" (Eccentric/Technical) nodes.
+- **Creativity Control (Temperature)**: Manually adjust the AI's "Neural randomness" slider (0.1 for precision, 1.0 for creative chaos).
+- **Responsive PWA**: Fully optimized for mobile with "Glassmorphism" styling and high-performance Framer Motion animations.
 
-### Running Locally
-1.  `npm install`
-2.  `npm run dev`
-3.  Visit `http://localhost:3000`
+---
 
-## 6. Deployment
-This project is optimized for **Vercel**.
-1.  Push to GitHub.
-2.  Import to Vercel.
-3.  Add Environment Variables in Vercel Dashboard.
-4.  Redeploy.
+## 🛠️ 7. Technical Specifications
+- **Real-time Streaming**: Vercel AI SDK for token-by-token streaming.
+- **Styling**: Vanilla CSS + Tailwind + Framer Motion for premium aesthetics.
+- **Sync Architecture**: Global state management via LocalStorage and Server-Side `/api/auth/me` synchronization.
